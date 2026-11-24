@@ -1,0 +1,166 @@
+@import "tailwindcss";
+@import "lenis/dist/lenis.css";
+
+/* ---------------------------------------------------------------
+   Design tokens
+   Palette sampled from the Techventics logo. One accent family only
+   (burnt → ember → flare). Orange covers <10% of any screen.
+---------------------------------------------------------------- */
+@theme {
+  /* Reset Tailwind's default palette so only brand colours exist. */
+  --color-*: initial;
+  --color-ember: #fc5400;
+  --color-flare: #ff7a1f;
+  --color-burnt: #e04808;
+  --color-ink: #0b0b0b;
+  --color-graphite: #181818;
+  --color-steel: #303030;
+  --color-bone: #f6f1ea;
+  --color-ash: #8a8580;
+  --color-transparent: transparent;
+  --color-current: currentColor;
+
+  /* Fonts (CSS variables are set by next/font/local in app/fonts.ts) */
+  --font-display: var(--font-clash), "Arial Narrow", system-ui, sans-serif;
+  --font-body: var(--font-satoshi), system-ui, -apple-system, "Segoe UI", sans-serif;
+  --font-mono: var(--font-jetbrains), ui-monospace, "Cascadia Mono", Consolas, monospace;
+
+  /* Fluid type scale (min at ~375px, max at ~1600px) */
+  --text-label: clamp(0.75rem, 0.73rem + 0.08vw, 0.8125rem); /* 12 → 13px, mono */
+  --text-label--line-height: 1.4;
+  --text-label--letter-spacing: 0.08em;
+
+  --text-small: clamp(0.9375rem, 0.92rem + 0.08vw, 1rem); /* 15 → 16px */
+  --text-small--line-height: 1.55;
+
+  --text-body: clamp(1.0625rem, 1.05rem + 0.06vw, 1.125rem); /* 17 → 18px */
+  --text-body--line-height: 1.6;
+
+  --text-lead: clamp(1.25rem, 1.12rem + 0.55vw, 1.625rem); /* 20 → 26px */
+  --text-lead--line-height: 1.45;
+
+  --text-h4: clamp(1.5rem, 1.33rem + 0.7vw, 2rem); /* 24 → 32px */
+  --text-h4--line-height: 1.15;
+  --text-h4--letter-spacing: -0.01em;
+
+  --text-h3: clamp(2rem, 1.64rem + 1.55vw, 3.25rem); /* 32 → 52px */
+  --text-h3--line-height: 1.05;
+  --text-h3--letter-spacing: -0.02em;
+
+  --text-h2: clamp(2.75rem, 1.98rem + 3.3vw, 5.5rem); /* 44 → 88px */
+  --text-h2--line-height: 0.98;
+  --text-h2--letter-spacing: -0.02em;
+
+  --text-h1: clamp(3.25rem, 1.75rem + 6.4vw, 8.5rem); /* 52 → 136px */
+  --text-h1--line-height: 0.92;
+  --text-h1--letter-spacing: -0.02em;
+
+  /* Hero: ~11vw on desktop, capped so it never runs wider than the reference */
+  --text-hero: clamp(3rem, 10.6vw, 11rem);
+  --text-hero--line-height: 0.88;
+  --text-hero--letter-spacing: -0.02em;
+
+  /* Breakpoint where the mobile menu switches to the desktop nav (≥992px) */
+  --breakpoint-nav: 62rem;
+
+  /* Easing — power3.out / expo.out equivalents. Nothing bouncy. */
+  --ease-out-cubic: cubic-bezier(0.215, 0.61, 0.355, 1);
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-in-out-cubic: cubic-bezier(0.645, 0.045, 0.355, 1);
+
+  /* Layout */
+  --spacing-header: 5.5rem;
+  --spacing-header-compact: 4rem;
+}
+
+/* ---------------------------------------------------------------
+   Base
+---------------------------------------------------------------- */
+@layer base {
+  html {
+    background-color: var(--color-ink);
+    color-scheme: dark;
+    -webkit-text-size-adjust: 100%;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    background-color: var(--color-ink);
+    color: var(--color-bone);
+    font-family: var(--font-body);
+    font-size: var(--text-body);
+    line-height: var(--text-body--line-height);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+  }
+
+  p {
+    text-wrap: pretty;
+  }
+
+  ::selection {
+    background-color: var(--color-ember);
+    color: var(--color-ink);
+  }
+
+  /* Visible focus in ember, keyboard only */
+  :focus-visible {
+    outline: 2px solid var(--color-ember);
+    outline-offset: 3px;
+    border-radius: 2px;
+  }
+
+  :focus:not(:focus-visible) {
+    outline: none;
+  }
+}
+
+/* ---------------------------------------------------------------
+   Utilities
+---------------------------------------------------------------- */
+
+/* Page gutters + max width */
+@utility container-x {
+  width: 100%;
+  max-width: 100rem;
+  margin-inline: auto;
+  padding-inline: clamp(1.25rem, 4vw, 4rem);
+}
+
+/* Mono label / eyebrow / tag text */
+@utility label {
+  font-family: var(--font-mono);
+  font-size: var(--text-label);
+  line-height: var(--text-label--line-height);
+  letter-spacing: var(--text-label--letter-spacing);
+  text-transform: uppercase;
+}
+
+/* Readable measure for running text */
+@utility measure {
+  max-width: 68ch;
+}
+
+/* ---------------------------------------------------------------
+   Reduced motion: instant everything
+---------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

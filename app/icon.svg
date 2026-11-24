@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="-4 -7 72 72">
+  <!-- PLACEHOLDER favicon from the approximated V mark; regenerate from the real logo in step 7 -->
+  <rect x="-4" y="-7" width="72" height="72" rx="14" fill="#0B0B0B"/>
+  <polygon points="0,0 18,0 32,28" fill="#F6F1EA"/>
+  <polygon points="0,0 32,28 32,58" fill="#F6F1EA" opacity="0.72"/>
+  <polygon points="46,0 64,0 32,28" fill="#FF7A1F"/>
+  <polygon points="64,0 32,58 32,28" fill="#E04808"/>
+  <polygon points="64,0 48,29 32,28" fill="#FC5400"/>
+</svg>
