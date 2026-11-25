@@ -37,7 +37,6 @@ export const services: Service[] = [
         height: 875,
       },
     ],
-    relatedProject: "freight-portal",
   },
   {
     id: "brand-identity",
@@ -72,7 +71,6 @@ export const services: Service[] = [
         height: 934,
       },
     ],
-    relatedProject: "restaurant-brand",
   },
   {
     id: "design",
@@ -108,7 +106,6 @@ export const services: Service[] = [
         height: 764,
       },
     ],
-    relatedProject: "taxi-app",
   },
   // Client copy
   {
@@ -138,6 +135,5 @@ export const services: Service[] = [
         height: 1024,
       },
     ],
-    relatedProject: "explainer-film",
   },
 ];

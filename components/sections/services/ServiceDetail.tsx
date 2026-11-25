@@ -1,17 +1,9 @@
 import { SplitReveal } from "@/components/motion/SplitReveal";
-import { Slider } from "@/components/ui/Slider";
-import { WorkCard } from "@/components/ui/WorkCard";
-import { projects } from "@/content/projects";
+import { ImageSlider } from "@/components/ui/ImageSlider";
 import type { Service } from "@/content/types";
 
-/** One service on the Services page: what we do, deliverables, tools and a related case. */
+/** One service on the Services page: what we do, an image slider, deliverables and tools. */
 export function ServiceDetail({ service }: { service: Service }) {
-  // Related work: the linked case first, then every other project tagged with this service.
-  // New projects in projects.ts join the slider automatically.
-  const related = projects
-    .map((project, index) => ({ project, index }))
-    .filter(({ project }) => project.id === service.relatedProject || project.services.includes(service.id))
-    .sort((a, b) => Number(b.project.id === service.relatedProject) - Number(a.project.id === service.relatedProject));
 
   return (
     <section id={service.id} aria-labelledby={`${service.id}-title`} className="scroll-mt-24 border-t border-steel py-16 first:border-t-0 first:pt-0 md:py-24">
@@ -22,30 +14,12 @@ export function ServiceDetail({ service }: { service: Service }) {
       <p className="measure mt-6 text-lead text-ash">{service.description}</p>
 
       {service.images && service.images.length > 0 && (
-        // Hidden on phones (and portrait tablets): shown from laptop width, or on a landscape tablet.
-        <div className="mt-12 hidden gap-4 md:grid-cols-12 lg:grid [@media(min-width:48rem)_and_(min-height:37.5rem)_and_(orientation:landscape)]:grid">
-          {service.images.map((img, i) => (
-            <figure
-              key={img.src}
-              className={`relative aspect-[16/9] overflow-hidden border border-steel ${
-                service.images!.length === 1 ? "md:col-span-12" : i % 2 === 0 ? "md:col-span-7" : "md:col-span-5 md:mt-16"
-              }`}
-            >
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={img.src}
-                srcSet={`${img.srcSmall} 800w, ${img.src} ${img.width}w`}
-                sizes="(min-width: 1024px) 40vw, 100vw"
-                alt={img.alt}
-                width={img.width}
-                height={img.height}
-                loading="lazy"
-                decoding="async"
-                className="absolute inset-0 h-full w-full object-cover"
-              />
-            </figure>
-          ))}
-        </div>
+        <ImageSlider
+          images={service.images}
+          label={`${service.title} images`}
+          sizes="(min-width: 1024px) 58vw, 100vw"
+          className="mt-12 aspect-[16/9] w-full border border-steel"
+        />
       )}
 
       <div className="mt-12 grid gap-12 md:grid-cols-2">
@@ -75,17 +49,6 @@ export function ServiceDetail({ service }: { service: Service }) {
           </div>
         )}
       </div>
-
-      {related.length > 0 && (
-        <div className="mt-14">
-          <h3 className="label text-ash">Related work</h3>
-          <Slider label={`${service.title}: related work`} className="mt-4">
-            {related.map(({ project, index }) => (
-              <WorkCard key={project.id} project={project} index={index} aspect="aspect-[16/9]" sizes="(min-width: 1024px) 58vw, 90vw" />
-            ))}
-          </Slider>
-        </div>
-      )}
     </section>
   );
 }

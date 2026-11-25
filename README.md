@@ -40,7 +40,7 @@ All copy and data live in typed files under [`content/`](content/):
 | --- | --- |
 | `site.ts` | Company name, tagline, email, nav, social links, logo path |
 | `home.ts` | Home page copy: intro, manifesto, section titles, closing CTA |
-| `services.ts` | The four services: summary, tags, description, deliverables, tools, related project |
+| `services.ts` | The four services: summary, tags, description, deliverables, tools, images (each list becomes a slider) |
 | `projects.ts` | Case studies (currently **placeholders**: set `placeholder: false` for real ones) |
 | `stats.ts` | The numbers on Home (currently **placeholder values**) |
 | `process.ts` | Discover / Design / Build / Launch steps |
