@@ -53,7 +53,7 @@ export function WorkCard({ project, index, aspect, className = "", sizes = "(min
 
   return (
     <article className={className}>
-      <CardLink href={project.href}>
+      <CardLink href={`/work/${project.id}`} label={`View ${project.title}`}>
         <div
           ref={card}
           onPointerMove={onMove}
@@ -96,14 +96,10 @@ export function WorkCard({ project, index, aspect, className = "", sizes = "(min
   );
 }
 
-function CardLink({ href, children }: { href: string | null; children: ReactNode }) {
-  return href ? (
-    <Link href={href} className="group block" data-cursor="view">
+function CardLink({ href, label, children }: { href: string; label: string; children: ReactNode }) {
+  return (
+    <Link href={href} aria-label={label} className="group block" data-cursor="view">
       {children}
     </Link>
-  ) : (
-    <div className="group block" data-cursor="view">
-      {children}
-    </div>
   );
 }

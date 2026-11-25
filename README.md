@@ -41,7 +41,7 @@ All copy and data live in typed files under [`content/`](content/):
 | `site.ts` | Company name, tagline, email, nav, social links, logo path |
 | `home.ts` | Home page copy: intro, manifesto, section titles, closing CTA |
 | `services.ts` | The four services: summary, tags, description, deliverables, tools, images (each list becomes a slider) |
-| `projects.ts` | Case studies (currently **placeholders**: set `placeholder: false` for real ones) |
+| `projects.ts` | Case studies (currently **placeholders**: set `placeholder: false` for real ones). Each gets a page at `/work/<id>` with overview, challenge, steps, outcome and results; add images to `gallery` to make its slider slide |
 | `stats.ts` | The numbers on Home (currently **placeholder values**) |
 | `process.ts` | Discover / Design / Build / Launch steps |
 | `about.ts` | About page: story, values, team (placeholder slots) |

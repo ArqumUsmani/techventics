@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import { useRef } from "react";
-import { ImageSlider } from "@/components/ui/ImageSlider";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { home } from "@/content/home";
 import { services } from "@/content/services";
@@ -17,7 +16,7 @@ export function ServicesTrack() {
   const root = useRef<HTMLElement>(null);
   const pinArea = useRef<HTMLDivElement>(null);
   const track = useRef<HTMLDivElement>(null);
-  const horizontal = useMediaQuery("(min-width: 62rem) and (min-height: 50rem) and (prefers-reduced-motion: no-preference)");
+  const horizontal = useMediaQuery("(min-width: 62rem) and (min-height: 54rem) and (prefers-reduced-motion: no-preference)");
 
   useGSAP(
     () => {
@@ -75,8 +74,32 @@ export function ServicesTrack() {
                 <span className="label text-ash">Service</span>
               </div>
 
-              {s.images && s.images.length > 0 && (
-                <ImageSlider images={s.images} label={`${s.title} images`} sizes="(min-width: 62rem) and (min-height: 50rem) 28rem, (min-width: 48rem) 50vw, 100vw" className="mt-6 aspect-[16/10] w-full [@media(max-height:60rem)]:aspect-[21/9] shrink-0 border border-steel" />
+              {s.images?.[0] && (
+                // The whole image, never cropped: it fits inside a frame that is the same size on every card,
+                // and a blurred copy of itself fills any space left at the sides.
+                <div className="relative mt-6 aspect-[16/10] w-full shrink-0 overflow-hidden border border-steel bg-ink [@media(max-height:60rem)]:aspect-[2/1]">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={s.images[0].srcSmall}
+                    alt=""
+                    aria-hidden
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 h-full w-full scale-110 object-cover opacity-40 blur-xl"
+                  />
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={s.images[0].src}
+                    srcSet={`${s.images[0].srcSmall} 800w, ${s.images[0].src} ${s.images[0].width}w`}
+                    sizes="(min-width: 62rem) and (min-height: 54rem) 28rem, (min-width: 48rem) 50vw, 100vw"
+                    alt={s.images[0].alt}
+                    width={s.images[0].width}
+                    height={s.images[0].height}
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 h-full w-full object-contain transition-transform duration-600 ease-out-expo group-hover:scale-[1.03]"
+                  />
+                </div>
               )}
 
               <div className={`flex flex-1 flex-col ${s.images?.[0] ? "mt-6" : "mt-16"}`}>

@@ -79,8 +79,16 @@ export type Project = {
   image: string | null;
   /** Muted MP4/WebM preview played on hover, or null. */
   previewSrc: string | null;
-  /** Case study URL, or null while there isn't one. */
-  href: string | null;
+  /** Project page (/work/<id>): images shown as a slider. Add more to make it slide. */
+  gallery: { src: string; srcSmall: string; alt: string; width: number; height: number }[];
+  /** Project page: the longer story. */
+  overview: string;
+  challenge: string;
+  /** Project page: what we did, step by step. */
+  approach: string[];
+  outcome: string;
+  /** Project page: headline results, e.g. { value: "3 → 1", label: "spreadsheets replaced" }. */
+  results: { value: string; label: string }[];
 };
 
 export type Stat = {
