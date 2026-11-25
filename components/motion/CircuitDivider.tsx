@@ -6,7 +6,8 @@ import { useReducedMotion } from "@/lib/motion";
 
 /**
  * Thin ember circuit trace between sections, echoing the lines in the logo.
- * Draws itself (stroke-dashoffset) as it scrolls through the viewport.
+ * Behaves like the Process timeline: the trace draws with the scroll (scrubbed both
+ * ways) and each node lights up when the trace reaches it.
  */
 export function CircuitDivider({ flip = false, className = "" }: { flip?: boolean; className?: string }) {
   const root = useRef<HTMLDivElement>(null);
@@ -14,19 +15,32 @@ export function CircuitDivider({ flip = false, className = "" }: { flip?: boolea
 
   useGSAP(
     () => {
-      if (reduced) return;
       const path = root.current?.querySelector<SVGPathElement>("[data-trace]");
-      const nodes = root.current?.querySelectorAll("[data-node]");
-      if (!path || !nodes) return;
+      const [startNode, endNode] = gsap.utils.toArray<HTMLElement>("[data-node]");
+      if (!path || !startNode || !endNode) return;
+
+      const light = (progress: number) => {
+        startNode.toggleAttribute("data-lit", progress > 0.01);
+        endNode.toggleAttribute("data-lit", progress > 0.985);
+      };
+
+      if (reduced) {
+        gsap.set(path, { strokeDashoffset: 0 });
+        light(1);
+        return;
+      }
+      light(0);
       gsap.fromTo(
         path,
         { strokeDashoffset: 1 },
-        { strokeDashoffset: 0, ease: "none", scrollTrigger: { trigger: root.current, start: "top 90%", end: "bottom 45%", scrub: true } },
-      );
-      gsap.fromTo(
-        nodes,
-        { scale: 0, transformOrigin: "center" },
-        { scale: 1, duration: 0.4, ease: "expo.out", stagger: 0.3, scrollTrigger: { trigger: root.current, start: "top 75%", once: true } },
+        {
+          strokeDashoffset: 0,
+          ease: "none",
+          // The dash runs 1 → 0 (pathLength 1): GSAP must not round it to whole pixels.
+          autoRound: false,
+          // A long range (about 60% of the viewport) so the drawing is visible as you scroll.
+          scrollTrigger: { trigger: root.current, start: "top 92%", end: "top 32%", scrub: true, onUpdate: (self) => light(self.progress) },
+        },
       );
     },
     { scope: root, dependencies: [reduced] },
@@ -34,25 +48,28 @@ export function CircuitDivider({ flip = false, className = "" }: { flip?: boolea
 
   // 1000 × 60 viewBox, stretched to the container width; strokes stay 1px.
   const d = flip ? "M1000 10 H620 L580 50 H0" : "M0 10 H380 L420 50 H1000";
+  const node =
+    "absolute block size-3 rounded-full border border-steel bg-ink transition-[background-color,border-color,box-shadow] duration-400 data-lit:border-ember data-lit:bg-ember data-lit:shadow-[0_0_0_5px_rgba(252,84,0,0.16)]";
   return (
     <div ref={root} aria-hidden className={`container-x ${className}`}>
-      <svg viewBox="0 0 1000 60" preserveAspectRatio="none" className="h-[60px] w-full overflow-visible">
-        <path d={d} fill="none" stroke="#303030" strokeWidth="1" vectorEffect="non-scaling-stroke" />
-        <path
-          data-trace
-          d={d}
-          fill="none"
-          stroke="#FC5400"
-          strokeWidth="1.25"
-          vectorEffect="non-scaling-stroke"
-          pathLength={1}
-          strokeDasharray="1"
-          strokeDashoffset={reduced ? 0 : undefined}
-        />
-      </svg>
-      <div className="relative -mt-[60px] h-[60px]">
-        <span data-node className={`absolute top-[6px] size-2 rounded-full bg-ember ${flip ? "right-0" : "left-0"}`} />
-        <span data-node className={`absolute top-[46px] size-2 rounded-full bg-ember ${flip ? "left-0" : "right-0"}`} />
+      <div className="relative">
+        <svg viewBox="0 0 1000 60" preserveAspectRatio="none" className="h-[60px] w-full overflow-visible">
+          <path d={d} fill="none" stroke="#303030" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+          <path
+            data-trace
+            d={d}
+            fill="none"
+            stroke="#FC5400"
+            strokeWidth="1.5"
+            vectorEffect="non-scaling-stroke"
+            pathLength={1}
+            strokeDasharray="1"
+            strokeDashoffset={1}
+          />
+        </svg>
+        {/* Nodes sit centred on the two ends of the trace. */}
+        <span data-node className={`${node} top-[4px] ${flip ? "-right-1.5" : "-left-1.5"}`} />
+        <span data-node className={`${node} top-[44px] ${flip ? "-left-1.5" : "-right-1.5"}`} />
       </div>
     </div>
   );
