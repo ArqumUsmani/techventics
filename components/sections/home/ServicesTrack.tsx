@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRef } from "react";
+import { ImageSlider } from "@/components/ui/ImageSlider";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { home } from "@/content/home";
 import { services } from "@/content/services";
@@ -74,21 +75,8 @@ export function ServicesTrack() {
                 <span className="label text-ash">Service</span>
               </div>
 
-              {s.images?.[0] && (
-                <div className="relative mt-6 aspect-[16/10] w-full [@media(max-height:60rem)]:aspect-[21/9] shrink-0 overflow-hidden border border-steel">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={s.images[0].src}
-                    srcSet={`${s.images[0].srcSmall} 800w, ${s.images[0].src} ${s.images[0].width}w`}
-                    sizes="(min-width: 62rem) and (min-height: 50rem) 28rem, (min-width: 48rem) 50vw, 100vw"
-                    alt={s.images[0].alt}
-                    width={s.images[0].width}
-                    height={s.images[0].height}
-                    loading="lazy"
-                    decoding="async"
-                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-600 ease-out-expo group-hover:scale-[1.03]"
-                  />
-                </div>
+              {s.images && s.images.length > 0 && (
+                <ImageSlider images={s.images} label={`${s.title} images`} sizes="(min-width: 62rem) and (min-height: 50rem) 28rem, (min-width: 48rem) 50vw, 100vw" className="mt-6 aspect-[16/10] w-full [@media(max-height:60rem)]:aspect-[21/9] shrink-0 border border-steel" />
               )}
 
               <div className={`flex flex-1 flex-col ${s.images?.[0] ? "mt-6" : "mt-16"}`}>
