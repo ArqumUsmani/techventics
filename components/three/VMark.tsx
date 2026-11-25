@@ -1,147 +1,111 @@
 "use client";
 
 import { useFrame, useThree } from "@react-three/fiber";
-import { useEffect, useMemo, useRef, type RefObject } from "react";
+import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
-import { facets, notch, traces, type Facet, type FacetTone, type Point } from "./vmarkShape";
+import { LOGO_FILES } from "@/components/brand/logoFiles";
 
 /* ---------------------------------------------------------------
-   The V mark drawn entirely in dots.
-   - Black half of the logo → dense bone dot noise.
-   - Orange half → ember dots laid out in contour lines.
-   - Circuit traces → dotted lines; nodes → small pulsing dot clusters.
+   The Techventics mark drawn entirely in dots, sampled from the logo artwork
+   (public/brand/techventics-mark-on-dark.svg): bone dots where the logo is black,
+   ember dots where it is orange. The white circuit lines and node holes stay empty;
+   the three nodes get small pulsing dot clusters.
    Hovering opens round holes that trail the cursor: dots are pushed out to a dense
    rim (a few scatter further) and the holes close smoothly. All displacement runs in
    the vertex shader, so there is no per-dot physics and nothing bounces.
 ---------------------------------------------------------------- */
 
-const UNIT = 1 / 16; // logo units → world units (64 × 58 → 4 × 3.6)
-const CENTER: Point = [32, 29];
+const { mark } = LOGO_FILES;
+const MARK_W = 4.4; // world units
+const MARK_H = MARK_W * (mark.height / mark.width);
 
-export const toWorld = ([x, y]: Point): [number, number] => [(x - CENTER[0]) * UNIT, -(y - CENTER[1]) * UNIT];
+/** Half width of the mark plus a margin, for camera fitting. */
+export const MARK_HALF_WIDTH = MARK_W / 2 + 0.3;
 
-function centroid(points: readonly (readonly [number, number])[]): [number, number] {
-  const n = points.length;
-  return [points.reduce((s, p) => s + p[0], 0) / n, points.reduce((s, p) => s + p[1], 0) / n];
-}
+/** Logo space (0–1 across the mark artwork) → world. */
+const toWorld = (u: number, v: number): [number, number] => [(u - 0.5) * MARK_W, (0.5 - v) * MARK_H];
 
-/** Centre of the V's opening in mark space: the fly-through target. */
-export const NOTCH_CENTER = centroid(notch.map(toWorld));
+/** Open space inside the V (logo space): the scroll fly-through passes through it. */
+export const NOTCH_CENTER = toWorld(0.5, 0.44);
 
-/** Half width of the mark incl. traces, for camera fitting. */
-export const MARK_HALF_WIDTH = 2.7;
+/** Circuit-node holes in the artwork (logo space; radius as a share of the mark width). */
+const NODES = [
+  { u: 0.15, v: 0.125, r: 0.022 },
+  { u: 0.542, v: 0.125, r: 0.022 },
+  { u: 0.834, v: 0.125, r: 0.026 },
+];
 
-const GAP = 0.05; // inset per facet so the facets still read as separate shards
-const HOLE_RADIUS = 0.3; // world units (~15% of the mark's width across)
+const HOLE_RADIUS = 0.3; // world units (~7% of the mark's width across)
 const TRAIL_SLOTS = 20;
 const TRAIL_SPACING = 0.15;
 
-const toneColor: Record<FacetTone, THREE.Color> = {
-  dark: new THREE.Color("#F6F1EA").multiplyScalar(0.9),
-  flare: new THREE.Color("#FF7A1F"),
-  ember: new THREE.Color("#FC5400"),
-  burnt: new THREE.Color("#E04808"),
-};
+const BONE = new THREE.Color("#F6F1EA").multiplyScalar(0.9);
 const EMBER = new THREE.Color("#FC5400");
+const FLARE = new THREE.Color("#FF7A1F");
 
 /* ---------------------------------------------------------------
-   Dot sampling
+   Dot sampling (in the browser, from the logo SVG drawn to a canvas)
 ---------------------------------------------------------------- */
-type DotBuffers = { position: Float32Array; color: Float32Array; seed: Float32Array; node: Float32Array; count: number };
+type DotBuffers = { position: Float32Array; color: Float32Array; seed: Float32Array; node: Float32Array };
 
-function facetTriangle(f: Facet) {
-  const world = f.points.map(toWorld);
-  const c = centroid(world);
-  const shrunk = world.map(([x, y]) => {
-    const dx = x - c[0];
-    const dy = y - c[1];
-    const len = Math.hypot(dx, dy);
-    const k = Math.max(0, (len - GAP) / len);
-    return new THREE.Vector2(dx * k, dy * k);
-  });
-  const matrix = new THREE.Matrix4().compose(
-    new THREE.Vector3(c[0], c[1], f.z * 0.5),
-    new THREE.Quaternion().setFromEuler(new THREE.Euler(f.tilt[0], f.tilt[1], 0)),
-    new THREE.Vector3(1, 1, 1),
-  );
-  const [a, b, d] = shrunk;
-  const area = Math.abs((b.x - a.x) * (d.y - a.y) - (d.x - a.x) * (b.y - a.y)) / 2;
-  return { pts: shrunk, matrix, area, origin: new THREE.Vector2(c[0], c[1]) };
-}
+async function sampleDots(total: number): Promise<DotBuffers> {
+  const img = new Image();
+  img.decoding = "async";
+  img.src = mark.srcOnDark;
+  await img.decode();
 
-// Contour-line field for the orange arm: lines run along the arm with a gentle wave.
-const ARM_DIR = new THREE.Vector2(32 - 64, -(58 - 0)).normalize(); // (64,0) → (32,58) in world orientation
-const ARM_NORMAL = new THREE.Vector2(-ARM_DIR.y, ARM_DIR.x);
-function onContour(x: number, y: number) {
-  const along = x * ARM_DIR.x + y * ARM_DIR.y;
-  const across = x * ARM_NORMAL.x + y * ARM_NORMAL.y;
-  return Math.sin(across * 68 + Math.sin(along * 2.4) * 1.6) > 0.25;
-}
+  const w = 720;
+  const h = Math.round(w * (mark.height / mark.width));
+  const canvas = document.createElement("canvas");
+  canvas.width = w;
+  canvas.height = h;
+  const ctx = canvas.getContext("2d", { willReadFrequently: true });
+  if (!ctx) throw new Error("2D canvas unavailable");
+  ctx.drawImage(img, 0, 0, w, h);
+  const { data } = ctx.getImageData(0, 0, w, h);
 
-function sampleDots(total: number): DotBuffers {
-  const tris = facets.map((f) => ({ f, ...facetTriangle(f) }));
-  const area = tris.reduce((s, t) => s + t.area, 0);
+  // Ink pixels, split by colour: the orange parts vs the bone (black in the logo) parts.
+  const ember: number[] = [];
+  const bone: number[] = [];
+  for (let i = 0; i < w * h; i++) {
+    if (data[i * 4 + 3] < 140) continue;
+    (data[i * 4] - data[i * 4 + 2] > 110 ? ember : bone).push(i);
+  }
+  const ink = ember.length + bone.length;
+
   const pos: number[] = [];
   const col: number[] = [];
   const seed: number[] = [];
   const node: number[] = [];
-  const v = new THREE.Vector3();
-
-  const push = (x: number, y: number, z: number, c: THREE.Color, n = 0) => {
+  const push = (u: number, v: number, z: number, c: THREE.Color, n = 0) => {
+    const [x, y] = toWorld(u, v);
     pos.push(x, y, z);
     col.push(c.r, c.g, c.b);
     seed.push(Math.random());
     node.push(n);
   };
 
-  // Facets
-  for (const t of tris) {
-    const dark = t.f.tone === "dark";
-    // Orange facets are sampled more densely, then thinned to contour lines.
-    const candidates = Math.round((t.area / area) * total * (dark ? 1 : 1.6));
-    const [p0, p1, p2] = t.pts;
-    for (let i = 0; i < candidates; i++) {
-      let r1 = Math.random();
-      let r2 = Math.random();
-      if (r1 + r2 > 1) {
-        r1 = 1 - r1;
-        r2 = 1 - r2;
-      }
-      const lx = p0.x + r1 * (p1.x - p0.x) + r2 * (p2.x - p0.x);
-      const ly = p0.y + r1 * (p1.y - p0.y) + r2 * (p2.y - p0.y);
-      if (!dark && !onContour(lx + t.origin.x, ly + t.origin.y) && Math.random() > 0.06) continue;
-      v.set(lx, ly, (Math.random() - 0.5) * 0.08).applyMatrix4(t.matrix);
-      push(v.x, v.y, v.z, toneColor[t.f.tone]);
-    }
+  for (let k = 0; k < total; k++) {
+    const fromEmber = Math.random() < ember.length / ink;
+    const list = fromEmber ? ember : bone;
+    const idx = list[(Math.random() * list.length) | 0];
+    const u = ((idx % w) + Math.random()) / w;
+    const v = (((idx / w) | 0) + Math.random()) / h;
+    // Orange parts sit a touch forward, so the layers separate when the mark turns.
+    const z = (Math.random() - 0.5) * 0.08 + (fromEmber ? 0.03 : 0);
+    push(u, v, z, fromEmber ? (Math.random() < 0.25 ? FLARE : EMBER) : BONE);
   }
 
-  // Circuit traces as dotted lines, nodes as dot clusters (node index + 1 drives the pulse).
-  traces.forEach((trace, ti) => {
-    const pts = trace.points.map(toWorld);
-    for (let s = 0; s < pts.length - 1; s++) {
-      const [ax, ay] = pts[s];
-      const [bx, by] = pts[s + 1];
-      const steps = Math.ceil(Math.hypot(bx - ax, by - ay) / 0.022);
-      for (let k = 0; k <= steps; k++) {
-        const u = k / steps;
-        push(ax + (bx - ax) * u + (Math.random() - 0.5) * 0.008, ay + (by - ay) * u + (Math.random() - 0.5) * 0.008, 0, EMBER);
-      }
-    }
-    const [nx, ny] = pts[pts.length - 1];
-    for (let k = 0; k < 70; k++) {
+  // Pulsing dot clusters in the circuit-node holes (node index + 1 drives the pulse).
+  NODES.forEach((n, i) => {
+    for (let k = 0; k < 60; k++) {
       const a = Math.random() * Math.PI * 2;
-      const r = Math.sqrt(Math.random()) * 0.07;
-      push(nx + Math.cos(a) * r, ny + Math.sin(a) * r, 0, EMBER, ti + 1);
+      const r = Math.sqrt(Math.random()) * n.r * 0.6;
+      push(n.u + Math.cos(a) * r, n.v + Math.sin(a) * r * (mark.width / mark.height), 0.02, EMBER, i + 1);
     }
   });
 
-  return {
-    position: new Float32Array(pos),
-    color: new Float32Array(col),
-    seed: new Float32Array(seed),
-    node: new Float32Array(node),
-    count: seed.length,
-  };
+  return { position: new Float32Array(pos), color: new Float32Array(col), seed: new Float32Array(seed), node: new Float32Array(node) };
 }
 
 /* ---------------------------------------------------------------
@@ -218,19 +182,35 @@ type VMarkProps = {
   progressRef?: RefObject<number>;
   /** Vertical offset of the mark (world units) to match the hero framing. */
   offsetY?: number;
+  /** Called once the dots exist and have been drawn. */
+  onReady?: () => void;
 };
 
 type Slot = { x: number; y: number; born: number; scale: number };
 
-export function VMark({ quality, interactive = true, progressRef, offsetY = 0 }: VMarkProps) {
+export function VMark({ quality, interactive = true, progressRef, offsetY = 0, onReady }: VMarkProps) {
   const group = useRef<THREE.Group>(null);
   const pointer = useRef({ x: 0, y: 0, ndcX: 0, ndcY: 0, movedAt: -Infinity });
   const trail = useRef<Slot[]>(Array.from({ length: TRAIL_SLOTS }, () => ({ x: 0, y: 0, born: -100, scale: 1 })));
   const trailState = useRef({ next: 0, lastX: 0, lastY: 0, hasLast: false });
   const { camera, gl } = useThree();
 
+  const [buffers, setBuffers] = useState<DotBuffers | null>(null);
+  const readySent = useRef(false);
+
+  // Sample the logo once per quality level (async: the artwork is an image).
+  useEffect(() => {
+    let alive = true;
+    sampleDots(quality === "high" ? 28000 : 11000)
+      .then((b) => alive && setBuffers(b))
+      .catch((err) => console.error("[VMark] could not sample the logo artwork", err));
+    return () => {
+      alive = false;
+    };
+  }, [quality]);
+
   const dots = useMemo(() => {
-    const buffers = sampleDots(quality === "high" ? 28000 : 11000);
+    if (!buffers) return null;
     const geometry = new THREE.BufferGeometry();
     geometry.setAttribute("position", new THREE.BufferAttribute(buffers.position, 3));
     geometry.setAttribute("aColor", new THREE.BufferAttribute(buffers.color, 3));
@@ -251,12 +231,12 @@ export function VMark({ quality, interactive = true, progressRef, offsetY = 0 }:
       toneMapped: false,
     });
     return { geometry, material };
-  }, [quality, gl]);
+  }, [buffers, quality, gl]);
 
   useEffect(
     () => () => {
-      dots.geometry.dispose();
-      dots.material.dispose();
+      dots?.geometry.dispose();
+      dots?.material.dispose();
     },
     [dots],
   );
@@ -291,7 +271,11 @@ export function VMark({ quality, interactive = true, progressRef, offsetY = 0 }:
 
   useFrame((state, delta) => {
     const g = group.current;
-    if (!g) return;
+    if (!g || !dots) return;
+    if (!readySent.current) {
+      readySent.current = true;
+      requestAnimationFrame(() => onReady?.());
+    }
     const t = state.clock.elapsedTime;
     const progress = THREE.MathUtils.clamp(progressRef?.current ?? 0, 0, 1);
     const idle = 1 - Math.min(1, progress * 2.5);
@@ -312,7 +296,7 @@ export function VMark({ quality, interactive = true, progressRef, offsetY = 0 }:
       scratch.raycaster.setFromCamera(scratch.ndc, camera);
       if (scratch.raycaster.ray.intersectPlane(scratch.plane, scratch.hit)) {
         g.worldToLocal(scratch.hit);
-        const over = Math.abs(scratch.hit.x) < 2.3 && Math.abs(scratch.hit.y) < 2.2;
+        const over = Math.abs(scratch.hit.x) < MARK_W / 2 + 0.1 && Math.abs(scratch.hit.y) < MARK_H / 2 + 0.1;
         const st = trailState.current;
         if (over && (!st.hasLast || Math.hypot(scratch.hit.x - st.lastX, scratch.hit.y - st.lastY) > TRAIL_SPACING)) {
           const slot = trail.current[st.next];
@@ -345,7 +329,7 @@ export function VMark({ quality, interactive = true, progressRef, offsetY = 0 }:
 
   return (
     <group ref={group} position-y={offsetY}>
-      <points geometry={dots.geometry} material={dots.material} frustumCulled={false} />
+      {dots && <points geometry={dots.geometry} material={dots.material} frustumCulled={false} />}
     </group>
   );
 }

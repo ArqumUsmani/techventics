@@ -1,25 +1,24 @@
+import { readFileSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { join } from "node:path";
 import { ImageResponse } from "next/og";
-import { facets, pointsAttr, toneHex, traces, VIEWBOX } from "@/components/three/vmarkShape";
+import { LOGO_FILES } from "@/components/brand/logoFiles";
 
 /* Branded Open Graph / Twitter image (1200 × 630), rendered at build time. */
 
 export const ogSize = { width: 1200, height: 630 };
 export const ogContentType = "image/png";
 
-export function markDataUri() {
-  const { x, y, width, height } = VIEWBOX;
-  const polys = facets.map((f) => `<polygon points="${pointsAttr(f.points)}" fill="${toneHex[f.tone]}" opacity="${f.shade ?? 1}"/>`).join("");
-  const lines = traces
-    .map((t) => {
-      const [nx, ny] = t.points[t.points.length - 1];
-      return `<polyline points="${pointsAttr(t.points)}" fill="none" stroke="#FC5400" stroke-width="1.6"/><circle cx="${nx}" cy="${ny}" r="2.4" fill="#FC5400"/>`;
-    })
-    .join("");
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="${x} ${y} ${width} ${height}">${polys}${lines}</svg>`;
-  return `data:image/svg+xml;base64,${Buffer.from(svg).toString("base64")}`;
+/** A file from public/ as a data URI (the image renderer can't fetch site URLs at build time). */
+function publicDataUri(path: string) {
+  const svg = readFileSync(join(process.cwd(), "public", path));
+  return `data:image/svg+xml;base64,${svg.toString("base64")}`;
 }
+
+/** The Techventics mark, on-dark colours. */
+export const markDataUri = () => publicDataUri(LOGO_FILES.mark.srcOnDark);
+/** Mark + wordmark lockup, on-dark colours. */
+const logoDataUri = () => publicDataUri(LOGO_FILES.logo.srcOnDark);
 
 export async function renderOg({ eyebrow, title }: { eyebrow: string; title: string }) {
   const [clash, mono] = await Promise.all([
@@ -41,13 +40,14 @@ export async function renderOg({ eyebrow, title }: { eyebrow: string; title: str
         <div style={{ position: "absolute", right: 72, bottom: 118, width: 300, height: 2, background: "#FC5400" }} />
         <div style={{ position: "absolute", right: 366, bottom: 113, width: 12, height: 12, borderRadius: 12, background: "#FC5400" }} />
 
-        <div style={{ display: "flex", alignItems: "center", gap: 18 }}>
+        <div style={{ display: "flex" }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src={markDataUri()} width={74} height={65} alt="" />
-          <div style={{ display: "flex", fontFamily: "Clash", fontSize: 30, letterSpacing: 2 }}>
-            <span style={{ color: "#F6F1EA" }}>TECH</span>
-            <span style={{ color: "#FC5400" }}>VENTICS</span>
-          </div>
+          <img
+            src={logoDataUri()}
+            height={72}
+            width={Math.round((72 * LOGO_FILES.logo.width) / LOGO_FILES.logo.height)}
+            alt=""
+          />
         </div>
 
         <div style={{ display: "flex", flexDirection: "column", marginTop: "auto" }}>

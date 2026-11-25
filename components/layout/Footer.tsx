@@ -11,8 +11,8 @@ export function Footer() {
       <div className="container-x grid grid-cols-1 gap-y-14 py-20 md:grid-cols-12 md:gap-x-8 md:py-28">
         {/* Brand */}
         <div className="md:col-span-5 lg:col-span-6">
-          <Link href="/" aria-label={`${site.name} home`} className="block w-[160px]">
-            <Logo />
+          <Link href="/" aria-label={`${site.name} home`} className="inline-block">
+            <Logo markWidth={50} />
           </Link>
           <p className="mt-6 max-w-[34ch] text-small text-ash">{site.tagline}</p>
           <a

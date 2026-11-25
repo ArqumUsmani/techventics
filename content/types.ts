@@ -34,15 +34,8 @@ export type SiteConfig = {
   url: string;
   email: string;
   logo: {
-    /**
-     * Path to a logo file that reads on a dark background (e.g. /brand/logo.svg).
-     * null = use the built-in placeholder lockup.
-     */
-    src: string | null;
+    /** Accessible name for the logo (the artwork is in public/brand). */
     alt: string;
-    /** Intrinsic size of the file, for next/image. */
-    width: number;
-    height: number;
   };
   nav: NavItem[];
   socials: SocialLink[];

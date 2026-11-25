@@ -55,10 +55,21 @@ Images:
   (e.g. `/images/work/freight.jpg`) and `previewSrc` (a short muted `.mp4`) in `projects.ts`.
 - **Team portraits:** put files in `public/images/team/` and set `photo` in `about.ts`.
   They are shown in monochrome and turn to colour on hover.
-- **Logo:** export a version that reads on a dark background (light "TECH") as
-  `public/brand/logo.svg` and set `logo.src` in `site.ts`. The 3D mark, favicon and share
-  images use the V shape in [`components/three/vmarkShape.ts`](components/three/vmarkShape.ts):
-  replace the facet points there with the real logo's, then run `npm run capture:vmark`.
+- **Logo:** the artwork lives in `public/brand/` as six SVGs:
+  - `techventics-mark`, `techventics-wordmark` and `techventics-logo` (mark + wordmark);
+  - each in an original-colour version and an `-on-dark` version (black drawn in bone for
+    the dark site).
+
+  They were traced from a 383px screenshot (`scripts/brand-source/`), so some edges are
+  slightly soft. **When the original vector logo is available:**
+  1. Save it over these files, keeping the names.
+  2. Update the sizes in [`components/brand/logoFiles.ts`](components/brand/logoFiles.ts).
+  3. Re-run `npm run capture:vmark`.
+
+  What updates automatically from these files:
+  - the header and footer;
+  - the dotted 3D hero mark, which is sampled from `techventics-mark-on-dark.svg`;
+  - the favicon (`app/icon.svg`), the Apple icon and the share images.
 
 ---
 
@@ -193,7 +204,7 @@ scripts/                capture-fallback.mjs
 
 ## 6. Still to supply (placeholders in the site today)
 
-- Logo as SVG (dark-background version)
+- The original vector logo (SVG/AI/PDF), to replace the traced version in `public/brand/`
 - USA and UK office addresses (`content/offices.ts`)
 - Team names, roles and portraits (`content/about.ts`)
 - Real case studies with images or videos (`content/projects.ts`)

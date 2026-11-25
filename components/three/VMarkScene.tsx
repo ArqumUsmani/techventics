@@ -104,10 +104,7 @@ export default function VMarkScene({ quality, progressRef, interactive = true, p
       dpr={high ? [1, 1.75] : [1, 1.25]}
       gl={{ antialias: !high, alpha: false, stencil: false, powerPreference: "high-performance" }}
       camera={{ fov: FOV, position: [0, 0, MIN_DISTANCE], near: 0.05, far: 80 }}
-      onCreated={({ gl }) => {
-        gl.setClearColor(INK);
-        requestAnimationFrame(() => requestAnimationFrame(() => onReady?.()));
-      }}
+      onCreated={({ gl }) => gl.setClearColor(INK)}
     >
       <color attach="background" args={[INK]} />
       <fog attach="fog" args={[INK, MIN_DISTANCE, MIN_DISTANCE + 14]} />
@@ -115,7 +112,7 @@ export default function VMarkScene({ quality, progressRef, interactive = true, p
       {/* Drop to the light path if the frame rate can't hold. */}
       <PerformanceMonitor onDecline={() => setDegraded(true)} flipflops={2} />
 
-      <VMark quality={q} interactive={interactive} progressRef={progressRef} offsetY={offsetY} />
+      <VMark quality={q} interactive={interactive} progressRef={progressRef} offsetY={offsetY} onReady={onReady} />
 
       {/* Steel floor grid: engineered, not glowy. */}
       <Grid

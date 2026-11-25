@@ -7,13 +7,8 @@ export const site: SiteConfig = {
     "Techventics designs and builds websites, web apps, mobile apps, brand identities and motion work for companies in the USA, UK and Pakistan.",
   url: process.env.NEXT_PUBLIC_SITE_URL ?? "https://techventics.com",
   email: "Info@techventics.com",
-  logo: {
-    // Swap to e.g. "/brand/logo.svg" once a version for dark backgrounds is supplied.
-    src: null,
-    alt: "Techventics",
-    width: 250,
-    height: 56,
-  },
+  // Logo artwork: public/brand/techventics-*.svg (see components/brand/logoFiles.ts)
+  logo: { alt: "Techventics" },
   nav: [
     { label: "Home", href: "/" },
     { label: "About", href: "/about" },
