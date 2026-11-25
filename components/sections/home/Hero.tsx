@@ -81,7 +81,7 @@ export function Hero({ children }: { children: ReactNode }) {
           <span className="sr-only">Techventics, a studio for web, mobile, brand and motion</span>
           <span
             aria-hidden
-            className="inline-flex font-display text-[clamp(1.5rem,3.1vw,3.25rem)] font-medium uppercase leading-none tracking-[0.38em] [margin-right:-0.38em]"
+            className="inline-flex font-display text-[clamp(1.5rem,3.1vw,3.25rem)] font-medium uppercase leading-none tracking-[0.38em] [margin-right:-0.38em] [text-shadow:0_0_18px_rgba(11,11,11,0.95),0_0_4px_rgba(11,11,11,0.9)]"
           >
             {WORD.map((part) => (
               <span key={part.text} className={`inline-flex ${part.tone}`}>

@@ -1,6 +1,6 @@
 "use client";
 
-import { Environment, Grid, Lightformer, PerformanceMonitor } from "@react-three/drei";
+import { Grid, PerformanceMonitor } from "@react-three/drei";
 import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { Bloom, EffectComposer } from "@react-three/postprocessing";
 import { useMemo, useRef, useState, type RefObject } from "react";
@@ -114,21 +114,6 @@ export default function VMarkScene({ quality, progressRef, interactive = true, p
 
       {/* Drop to the light path if the frame rate can't hold. */}
       <PerformanceMonitor onDecline={() => setDegraded(true)} flipflops={2} />
-
-      <ambientLight intensity={0.12} />
-      <directionalLight position={[-4, 6, 6]} intensity={1.1} color="#F6F1EA" />
-      <pointLight position={[3.5, -1, -2]} intensity={14} distance={12} color="#FC5400" />
-
-      {/* Reflections from procedural light panels: no HDR download. */}
-      <Environment resolution={high ? 256 : 64} frames={1}>
-        <Lightformer form="rect" intensity={2.2} color="#F6F1EA" position={[0, 5, 2]} rotation-x={Math.PI / 2} scale={[10, 1.4, 1]} />
-        <Lightformer form="rect" intensity={3} color="#FC5400" position={[6, 0, 1]} rotation-y={-Math.PI / 2} scale={[1.2, 8, 1]} />
-        <Lightformer form="rect" intensity={0.7} color="#F6F1EA" position={[-6, 1, 3]} rotation-y={Math.PI / 2} scale={[1, 6, 1]} />
-        <Lightformer form="rect" intensity={0.5} color="#E04808" position={[0, -4, -3]} rotation-x={-Math.PI / 2} scale={[8, 1, 1]} />
-        {/* soft frontal panel: gives the black facets a graded metal sheen */}
-        <Lightformer form="rect" intensity={0.9} color="#F6F1EA" position={[-2, 2.5, 8]} scale={[6, 3, 1]} />
-        <Lightformer form="ring" intensity={1.2} color="#F6F1EA" position={[3, 3, 6]} scale={1.5} />
-      </Environment>
 
       <VMark quality={q} interactive={interactive} progressRef={progressRef} offsetY={offsetY} />
 

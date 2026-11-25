@@ -1,16 +1,21 @@
 "use client";
 
-import { Edges, Line } from "@react-three/drei";
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import { facets, notch, traces, type Facet, type FacetTone, type Point } from "./vmarkShape";
 
 /* ---------------------------------------------------------------
-   Logo units → world units. The mark is 64 × 58 logo units → 4 × 3.6 world units,
-   centred on the origin.
+   The V mark drawn entirely in dots.
+   - Black half of the logo → dense bone dot noise.
+   - Orange half → ember dots laid out in contour lines.
+   - Circuit traces → dotted lines; nodes → small pulsing dot clusters.
+   Hovering opens round holes that trail the cursor: dots are pushed out to a dense
+   rim (a few scatter further) and the holes close smoothly. All displacement runs in
+   the vertex shader, so there is no per-dot physics and nothing bounces.
 ---------------------------------------------------------------- */
-const UNIT = 1 / 16;
+
+const UNIT = 1 / 16; // logo units → world units (64 × 58 → 4 × 3.6)
 const CENTER: Point = [32, 29];
 
 export const toWorld = ([x, y]: Point): [number, number] => [(x - CENTER[0]) * UNIT, -(y - CENTER[1]) * UNIT];
@@ -26,257 +31,234 @@ export const NOTCH_CENTER = centroid(notch.map(toWorld));
 /** Half width of the mark incl. traces, for camera fitting. */
 export const MARK_HALF_WIDTH = 2.7;
 
-const EMBER = new THREE.Color("#FC5400");
-const BONE = new THREE.Color("#F6F1EA");
-const BEVEL = 0.022;
-const GAP = 0.05; // inset per facet so the shards read as separate pieces
+const GAP = 0.05; // inset per facet so the facets still read as separate shards
+const HOLE_RADIUS = 0.3; // world units (~15% of the mark's width across)
+const TRAIL_SLOTS = 20;
+const TRAIL_SPACING = 0.15;
 
-type BuiltFacet = {
-  facet: Facet;
-  geometry: THREE.ExtrudeGeometry;
-  local: THREE.Vector2[];
-  matrix: THREE.Matrix4;
-  position: [number, number, number];
-  rotation: [number, number, number];
+const toneColor: Record<FacetTone, THREE.Color> = {
+  dark: new THREE.Color("#F6F1EA").multiplyScalar(0.9),
+  flare: new THREE.Color("#FF7A1F"),
+  ember: new THREE.Color("#FC5400"),
+  burnt: new THREE.Color("#E04808"),
 };
+const EMBER = new THREE.Color("#FC5400");
 
-function buildFacet(facet: Facet, smooth: boolean): BuiltFacet {
-  const world = facet.points.map(toWorld);
+/* ---------------------------------------------------------------
+   Dot sampling
+---------------------------------------------------------------- */
+type DotBuffers = { position: Float32Array; color: Float32Array; seed: Float32Array; node: Float32Array; count: number };
+
+function facetTriangle(f: Facet) {
+  const world = f.points.map(toWorld);
   const c = centroid(world);
-  const local = world.map(([x, y]) => {
+  const shrunk = world.map(([x, y]) => {
     const dx = x - c[0];
     const dy = y - c[1];
     const len = Math.hypot(dx, dy);
-    const k = Math.max(0, (len - GAP - BEVEL) / len);
+    const k = Math.max(0, (len - GAP) / len);
     return new THREE.Vector2(dx * k, dy * k);
   });
-
-  const geometry = new THREE.ExtrudeGeometry(new THREE.Shape(local), {
-    depth: facet.depth,
-    steps: 1,
-    curveSegments: 1,
-    bevelEnabled: true,
-    bevelThickness: BEVEL * 1.4,
-    bevelSize: BEVEL,
-    bevelSegments: smooth ? 2 : 1,
-  });
-  geometry.translate(0, 0, -facet.depth / 2);
-  geometry.computeVertexNormals();
-
-  const position: [number, number, number] = [c[0], c[1], facet.z];
-  const rotation: [number, number, number] = [facet.tilt[0], facet.tilt[1], 0];
   const matrix = new THREE.Matrix4().compose(
-    new THREE.Vector3(...position),
-    new THREE.Quaternion().setFromEuler(new THREE.Euler(...rotation)),
+    new THREE.Vector3(c[0], c[1], f.z * 0.5),
+    new THREE.Quaternion().setFromEuler(new THREE.Euler(f.tilt[0], f.tilt[1], 0)),
     new THREE.Vector3(1, 1, 1),
   );
-
-  return { facet, geometry, local, matrix, position, rotation };
+  const [a, b, d] = shrunk;
+  const area = Math.abs((b.x - a.x) * (d.y - a.y) - (d.x - a.x) * (b.y - a.y)) / 2;
+  return { pts: shrunk, matrix, area, origin: new THREE.Vector2(c[0], c[1]) };
 }
 
-/* ---------------------------------------------------------------
-   Cursor "hole": shared uniforms injected into every facet material.
-   Fragments inside the radius are discarded; a thin ember rim glows around it.
----------------------------------------------------------------- */
-type HoleUniforms = {
-  uHole: { value: THREE.Vector3 };
-  uHoleRadius: { value: number };
-  uRimColor: { value: THREE.Color };
-  uRimWidth: { value: number };
-};
-
-function withHole(material: THREE.MeshPhysicalMaterial, uniforms: HoleUniforms) {
-  material.onBeforeCompile = (shader) => {
-    Object.assign(shader.uniforms, uniforms);
-    shader.vertexShader = shader.vertexShader
-      .replace("#include <common>", "#include <common>\nvarying vec3 vHoleWorld;")
-      .replace("#include <fog_vertex>", "#include <fog_vertex>\nvHoleWorld = (modelMatrix * vec4(transformed, 1.0)).xyz;");
-    shader.fragmentShader = shader.fragmentShader
-      .replace(
-        "#include <common>",
-        "#include <common>\nvarying vec3 vHoleWorld;\nuniform vec3 uHole;\nuniform float uHoleRadius;\nuniform vec3 uRimColor;\nuniform float uRimWidth;",
-      )
-      .replace(
-        "#include <clipping_planes_fragment>",
-        "#include <clipping_planes_fragment>\nfloat holeD = distance(vHoleWorld.xy, uHole.xy);\nif (uHoleRadius > 0.001 && holeD < uHoleRadius) discard;",
-      )
-      .replace(
-        "#include <emissivemap_fragment>",
-        "#include <emissivemap_fragment>\nif (uHoleRadius > 0.001) totalEmissiveRadiance += uRimColor * (1.0 - smoothstep(uHoleRadius, uHoleRadius + uRimWidth, holeD));",
-      );
-  };
-  material.customProgramCacheKey = () => "vmark-hole";
-  return material;
+// Contour-line field for the orange arm: lines run along the arm with a gentle wave.
+const ARM_DIR = new THREE.Vector2(32 - 64, -(58 - 0)).normalize(); // (64,0) → (32,58) in world orientation
+const ARM_NORMAL = new THREE.Vector2(-ARM_DIR.y, ARM_DIR.x);
+function onContour(x: number, y: number) {
+  const along = x * ARM_DIR.x + y * ARM_DIR.y;
+  const across = x * ARM_NORMAL.x + y * ARM_NORMAL.y;
+  return Math.sin(across * 68 + Math.sin(along * 2.4) * 1.6) > 0.25;
 }
 
-/* Black metal for the dark arm; black metal with a low ember glow for the orange arm. */
-const toneEmissive: Record<FacetTone, number> = { dark: 0, flare: 0.16, ember: 0.11, burnt: 0.06 };
-const toneColor: Record<FacetTone, string> = { dark: "#141414", flare: "#FF7A1F", ember: "#FC5400", burnt: "#E04808" };
-
-function makeMaterial(tone: FacetTone, uniforms: HoleUniforms) {
-  const material =
-    tone === "dark"
-      ? new THREE.MeshPhysicalMaterial({ color: "#2a2a2a", metalness: 0.92, roughness: 0.34, clearcoat: 1, clearcoatRoughness: 0.18 })
-      : new THREE.MeshPhysicalMaterial({
-          color: "#2c160b",
-          metalness: 0.78,
-          roughness: 0.36,
-          clearcoat: 1,
-          clearcoatRoughness: 0.22,
-          emissive: new THREE.Color(toneColor[tone]),
-          emissiveIntensity: toneEmissive[tone],
-        });
-  return withHole(material, uniforms);
-}
-
-/* ---------------------------------------------------------------
-   Surface particles: sampled on the front face of each facet. At rest they are a
-   faint dotted texture; near the cursor they peel off and spring back.
----------------------------------------------------------------- */
-const particleVertex = /* glsl */ `
-  uniform float uSize;
-  uniform float uPixelRatio;
-  attribute float aGlow;
-  attribute vec3 aColor;
-  varying float vGlow;
-  varying vec3 vColor;
-  void main() {
-    vec4 mv = modelViewMatrix * vec4(position, 1.0);
-    gl_Position = projectionMatrix * mv;
-    gl_PointSize = min(uSize * uPixelRatio * (1.0 + aGlow) * (10.0 / -mv.z), 7.0 * uPixelRatio);
-    vGlow = aGlow;
-    vColor = aColor;
-  }
-`;
-const particleFragment = /* glsl */ `
-  uniform float uRest;
-  uniform float uFade;
-  varying float vGlow;
-  varying vec3 vColor;
-  void main() {
-    float d = length(gl_PointCoord - 0.5);
-    if (d > 0.5) discard;
-    float a = smoothstep(0.5, 0.15, d) * mix(uRest, 1.0, vGlow) * uFade;
-    gl_FragColor = vec4(vColor * (1.0 + vGlow * 0.9), a);
-  }
-`;
-
-function sampleParticles(built: BuiltFacet[], count: number) {
-  const areas = built.map(({ local }) => {
-    const [a, b, c] = local;
-    return Math.abs((b.x - a.x) * (c.y - a.y) - (c.x - a.x) * (b.y - a.y)) / 2;
-  });
-  const total = areas.reduce((s, a) => s + a, 0);
-  const home = new Float32Array(count * 3);
-  const color = new Float32Array(count * 3);
+function sampleDots(total: number): DotBuffers {
+  const tris = facets.map((f) => ({ f, ...facetTriangle(f) }));
+  const area = tris.reduce((s, t) => s + t.area, 0);
+  const pos: number[] = [];
+  const col: number[] = [];
+  const seed: number[] = [];
+  const node: number[] = [];
   const v = new THREE.Vector3();
-  let i = 0;
-  built.forEach((b, fi) => {
-    const n = fi === built.length - 1 ? count - i : Math.round((areas[fi] / total) * count);
-    const [p0, p1, p2] = b.local;
-    const tint = b.facet.tone === "dark" ? BONE : EMBER;
-    const front = b.facet.depth / 2 + BEVEL * 1.4 + 0.006;
-    for (let k = 0; k < n && i < count; k++, i++) {
+
+  const push = (x: number, y: number, z: number, c: THREE.Color, n = 0) => {
+    pos.push(x, y, z);
+    col.push(c.r, c.g, c.b);
+    seed.push(Math.random());
+    node.push(n);
+  };
+
+  // Facets
+  for (const t of tris) {
+    const dark = t.f.tone === "dark";
+    // Orange facets are sampled more densely, then thinned to contour lines.
+    const candidates = Math.round((t.area / area) * total * (dark ? 1 : 1.6));
+    const [p0, p1, p2] = t.pts;
+    for (let i = 0; i < candidates; i++) {
       let r1 = Math.random();
       let r2 = Math.random();
       if (r1 + r2 > 1) {
         r1 = 1 - r1;
         r2 = 1 - r2;
       }
-      v.set(p0.x + r1 * (p1.x - p0.x) + r2 * (p2.x - p0.x), p0.y + r1 * (p1.y - p0.y) + r2 * (p2.y - p0.y), front);
-      v.applyMatrix4(b.matrix);
-      home.set([v.x, v.y, v.z], i * 3);
-      color.set([tint.r, tint.g, tint.b], i * 3);
+      const lx = p0.x + r1 * (p1.x - p0.x) + r2 * (p2.x - p0.x);
+      const ly = p0.y + r1 * (p1.y - p0.y) + r2 * (p2.y - p0.y);
+      if (!dark && !onContour(lx + t.origin.x, ly + t.origin.y) && Math.random() > 0.06) continue;
+      v.set(lx, ly, (Math.random() - 0.5) * 0.08).applyMatrix4(t.matrix);
+      push(v.x, v.y, v.z, toneColor[t.f.tone]);
+    }
+  }
+
+  // Circuit traces as dotted lines, nodes as dot clusters (node index + 1 drives the pulse).
+  traces.forEach((trace, ti) => {
+    const pts = trace.points.map(toWorld);
+    for (let s = 0; s < pts.length - 1; s++) {
+      const [ax, ay] = pts[s];
+      const [bx, by] = pts[s + 1];
+      const steps = Math.ceil(Math.hypot(bx - ax, by - ay) / 0.022);
+      for (let k = 0; k <= steps; k++) {
+        const u = k / steps;
+        push(ax + (bx - ax) * u + (Math.random() - 0.5) * 0.008, ay + (by - ay) * u + (Math.random() - 0.5) * 0.008, 0, EMBER);
+      }
+    }
+    const [nx, ny] = pts[pts.length - 1];
+    for (let k = 0; k < 70; k++) {
+      const a = Math.random() * Math.PI * 2;
+      const r = Math.sqrt(Math.random()) * 0.07;
+      push(nx + Math.cos(a) * r, ny + Math.sin(a) * r, 0, EMBER, ti + 1);
     }
   });
-  return { home, color };
+
+  return {
+    position: new Float32Array(pos),
+    color: new Float32Array(col),
+    seed: new Float32Array(seed),
+    node: new Float32Array(node),
+    count: seed.length,
+  };
 }
 
+/* ---------------------------------------------------------------
+   Shaders
+---------------------------------------------------------------- */
+const vertexShader = /* glsl */ `
+  #define SLOTS ${TRAIL_SLOTS}
+  uniform float uSize;
+  uniform float uPixelRatio;
+  uniform float uTime;
+  uniform float uFade;
+  uniform vec3 uTrail[SLOTS]; // xy = centre (mark space), z = radius
+  attribute vec3 aColor;
+  attribute float aSeed;
+  attribute float aNode;
+  varying vec3 vColor;
+  varying float vAlpha;
+
+  void main() {
+    vec3 p = position;
+    vec2 disp = vec2(0.0);
+    float scatter = 0.0;
+
+    for (int i = 0; i < SLOTS; i++) {
+      float r = uTrail[i].z;
+      if (r < 0.001) continue;
+      vec2 dv = p.xy - uTrail[i].xy;
+      float d = length(dv);
+      vec2 dir = d > 1e-4 ? dv / d : vec2(cos(aSeed * 6.2831), sin(aSeed * 6.2831));
+      // Inside the hole: dots compress onto the rim. Outside: displacement falls off smoothly.
+      float nd = d < r ? r + d * 0.28 : d + 0.28 * r * exp(-(d - r) / (0.5 * r));
+      // A few dots get thrown further out.
+      float infl = 1.0 - smoothstep(r * 0.5, r * 2.4, d);
+      float thrown = step(0.88, aSeed) * infl;
+      disp += dir * ((nd - d) + thrown * r * (0.5 + fract(aSeed * 37.0) * 1.8));
+      scatter = max(scatter, thrown);
+    }
+
+    p.xy += disp;
+    p.z += scatter * 0.25 * fract(aSeed * 91.0);
+
+    vec4 mv = modelViewMatrix * vec4(p, 1.0);
+    gl_Position = projectionMatrix * mv;
+
+    float pulse = 1.0;
+    if (aNode > 0.5) pulse = 1.0 + 0.7 * pow(0.5 + 0.5 * sin(uTime * 1.6 - aNode * 1.1), 3.0);
+
+    gl_PointSize = clamp(uSize * uPixelRatio * pulse * (10.0 / -mv.z), 0.75, 6.0 * uPixelRatio);
+    vColor = aColor * (aNode > 0.5 ? pulse : 1.0);
+    // Fade dots that get very close to the camera during the fly-through.
+    vAlpha = uFade * smoothstep(0.25, 1.4, -mv.z) * (1.0 - scatter * 0.4);
+  }
+`;
+
+const fragmentShader = /* glsl */ `
+  varying vec3 vColor;
+  varying float vAlpha;
+  void main() {
+    float d = length(gl_PointCoord - 0.5);
+    if (d > 0.5) discard;
+    gl_FragColor = vec4(vColor, vAlpha * smoothstep(0.5, 0.28, d));
+    #include <colorspace_fragment>
+  }
+`;
+
+/* ---------------------------------------------------------------
+   Component
+---------------------------------------------------------------- */
 type VMarkProps = {
   quality: "high" | "low";
-  /** Lean toward the cursor and react with the hole + particles. */
+  /** Hover holes + gentle lean toward the cursor. */
   interactive?: boolean;
-  /** Scroll fly-through progress 0–1. Idle motion and effects fade out as it rises. */
+  /** Scroll fly-through progress 0–1. Idle motion and hover fade out as it rises. */
   progressRef?: RefObject<number>;
   /** Vertical offset of the mark (world units) to match the hero framing. */
   offsetY?: number;
 };
 
+type Slot = { x: number; y: number; born: number; scale: number };
+
 export function VMark({ quality, interactive = true, progressRef, offsetY = 0 }: VMarkProps) {
   const group = useRef<THREE.Group>(null);
-  const nodeRefs = useRef<(THREE.Mesh | null)[]>([]);
   const pointer = useRef({ x: 0, y: 0, ndcX: 0, ndcY: 0, movedAt: -Infinity });
+  const trail = useRef<Slot[]>(Array.from({ length: TRAIL_SLOTS }, () => ({ x: 0, y: 0, born: -100, scale: 1 })));
+  const trailState = useRef({ next: 0, lastX: 0, lastY: 0, hasLast: false });
   const { camera, gl } = useThree();
 
-  const built = useMemo(() => facets.map((f) => buildFacet(f, quality === "high")), [quality]);
-
-  const hole = useMemo<HoleUniforms>(
-    () => ({
-      uHole: { value: new THREE.Vector3(0, 0, 0) },
-      uHoleRadius: { value: 0 },
-      uRimColor: { value: EMBER.clone().multiplyScalar(1.6) },
-      uRimWidth: { value: 0.07 },
-    }),
-    [],
-  );
-
-  const materials = useMemo(() => {
-    const m = new Map<FacetTone, THREE.MeshPhysicalMaterial>();
-    (["dark", "flare", "ember", "burnt"] as FacetTone[]).forEach((t) => m.set(t, makeMaterial(t, hole)));
-    return m;
-  }, [hole]);
-
-  // Particles
-  const particleCount = quality === "high" ? 3200 : 1400;
-  const particles = useMemo(() => {
-    const { home, color } = sampleParticles(built, particleCount);
+  const dots = useMemo(() => {
+    const buffers = sampleDots(quality === "high" ? 28000 : 11000);
     const geometry = new THREE.BufferGeometry();
-    geometry.setAttribute("position", new THREE.BufferAttribute(new Float32Array(home), 3).setUsage(THREE.DynamicDrawUsage));
-    geometry.setAttribute("aColor", new THREE.BufferAttribute(color, 3));
-    geometry.setAttribute("aGlow", new THREE.BufferAttribute(new Float32Array(particleCount), 1).setUsage(THREE.DynamicDrawUsage));
+    geometry.setAttribute("position", new THREE.BufferAttribute(buffers.position, 3));
+    geometry.setAttribute("aColor", new THREE.BufferAttribute(buffers.color, 3));
+    geometry.setAttribute("aSeed", new THREE.BufferAttribute(buffers.seed, 1));
+    geometry.setAttribute("aNode", new THREE.BufferAttribute(buffers.node, 1));
     const material = new THREE.ShaderMaterial({
-      vertexShader: particleVertex,
-      fragmentShader: particleFragment,
+      vertexShader,
+      fragmentShader,
       uniforms: {
-        uSize: { value: 2.2 },
+        uSize: { value: quality === "high" ? 1.9 : 2.1 },
         uPixelRatio: { value: Math.min(gl.getPixelRatio(), 2) },
-        uRest: { value: 0.2 },
+        uTime: { value: 0 },
         uFade: { value: 1 },
+        uTrail: { value: Array.from({ length: TRAIL_SLOTS }, () => new THREE.Vector3(0, 0, 0)) },
       },
       transparent: true,
       depthWrite: false,
-      blending: THREE.AdditiveBlending,
       toneMapped: false,
     });
-    return {
-      geometry,
-      material,
-      home,
-      velocity: new Float32Array(particleCount * 3),
-      seed: Float32Array.from({ length: particleCount }, () => Math.random()),
-    };
-  }, [built, particleCount, gl]);
+    return { geometry, material };
+  }, [quality, gl]);
 
-  const traceLines = useMemo(
-    () =>
-      traces.map((t) => ({
-        id: t.id,
-        points: t.points.map((p) => {
-          const [x, y] = toWorld(p);
-          return new THREE.Vector3(x, y, 0);
-        }),
-      })),
-    [],
-  );
-
-  useEffect(() => () => built.forEach((b) => b.geometry.dispose()), [built]);
-  useEffect(() => () => materials.forEach((m) => m.dispose()), [materials]);
   useEffect(
     () => () => {
-      particles.geometry.dispose();
-      particles.material.dispose();
+      dots.geometry.dispose();
+      dots.material.dispose();
     },
-    [particles],
+    [dots],
   );
 
   // Pointer tracked on window, so it works while the canvas sits behind page content.
@@ -299,11 +281,10 @@ export function VMark({ quality, interactive = true, progressRef, offsetY = 0 }:
   const scratch = useMemo(
     () => ({
       raycaster: new THREE.Raycaster(),
-      plane: new THREE.Plane(new THREE.Vector3(0, 0, 1), -0.2),
+      plane: new THREE.Plane(new THREE.Vector3(0, 0, 1), 0),
       hit: new THREE.Vector3(),
-      target: new THREE.Vector3(),
-      local: new THREE.Vector3(),
       ndc: new THREE.Vector2(),
+      lastMove: -Infinity,
     }),
     [],
   );
@@ -313,126 +294,58 @@ export function VMark({ quality, interactive = true, progressRef, offsetY = 0 }:
     if (!g) return;
     const t = state.clock.elapsedTime;
     const progress = THREE.MathUtils.clamp(progressRef?.current ?? 0, 0, 1);
-    const idle = 1 - Math.min(1, progress * 2.5); // calm down during the fly-through
+    const idle = 1 - Math.min(1, progress * 2.5);
     const px = interactive ? pointer.current.x : 0;
     const py = interactive ? pointer.current.y : 0;
 
-    // Sway + lean
-    const targetY = (Math.sin(t * 0.21) * 0.3 + px * 0.2) * idle;
-    const targetX = (Math.sin(t * 0.16) * 0.05 + py * 0.12) * idle;
-    g.rotation.y = THREE.MathUtils.damp(g.rotation.y, targetY, 2.4, delta);
-    g.rotation.x = THREE.MathUtils.damp(g.rotation.x, targetX, 2.4, delta);
+    // Subtle lean only: the mark stays facing the viewer, like the reference.
+    const targetY = (Math.sin(t * 0.2) * 0.08 + px * 0.1) * idle;
+    const targetX = (Math.sin(t * 0.15) * 0.03 + py * 0.06) * idle;
+    g.rotation.y = THREE.MathUtils.damp(g.rotation.y, targetY, 2.2, delta);
+    g.rotation.x = THREE.MathUtils.damp(g.rotation.x, targetX, 2.2, delta);
 
-    // Orange facets go dark up close, so orange never floods the screen.
-    materials.forEach((m, tone) => {
-      if (tone !== "dark") m.emissiveIntensity = toneEmissive[tone] * idle;
-    });
-
-    // Cursor hole: follows the pointer on the mark's plane while the cursor moves over it.
-    let holeTarget = 0;
-    if (interactive && idle > 0.99) {
+    // Drop a new hole each time the cursor travels TRAIL_SPACING across the mark.
+    const moved = pointer.current.movedAt !== scratch.lastMove;
+    scratch.lastMove = pointer.current.movedAt;
+    if (interactive && moved && idle > 0.99) {
       scratch.ndc.set(pointer.current.ndcX, pointer.current.ndcY);
       scratch.raycaster.setFromCamera(scratch.ndc, camera);
       if (scratch.raycaster.ray.intersectPlane(scratch.plane, scratch.hit)) {
-        const recent = performance.now() - pointer.current.movedAt < 1400;
-        const over = Math.abs(scratch.hit.x) < 2.2 && Math.abs(scratch.hit.y - offsetY) < 2.1;
-        if (recent && over) holeTarget = 0.3;
-        scratch.target.copy(scratch.hit);
-      }
-    }
-    const h = hole.uHole.value;
-    h.x = THREE.MathUtils.damp(h.x, scratch.target.x, 12, delta);
-    h.y = THREE.MathUtils.damp(h.y, scratch.target.y, 12, delta);
-    hole.uHoleRadius.value = THREE.MathUtils.damp(hole.uHoleRadius.value, holeTarget, holeTarget > 0 ? 7 : 3, delta);
-
-    // Particles: pushed out of a ring around the hole, spring back home.
-    scratch.local.copy(h);
-    g.worldToLocal(scratch.local);
-    const reach = hole.uHoleRadius.value * 2.1;
-    const pos = particles.geometry.attributes.position.array as Float32Array;
-    const glow = particles.geometry.attributes.aGlow.array as Float32Array;
-    const { home, velocity, seed } = particles;
-    const k = 1 - Math.exp(-delta * 9); // spring
-    const damping = Math.exp(-delta * 5);
-    for (let i = 0; i < particleCount; i++) {
-      const ix = i * 3;
-      const hx = home[ix];
-      const hy = home[ix + 1];
-      const hz = home[ix + 2];
-      let tx = hx;
-      let ty = hy;
-      let tz = hz;
-      if (reach > 0.01) {
-        const dx = hx - scratch.local.x;
-        const dy = hy - scratch.local.y;
-        const d = Math.hypot(dx, dy);
-        if (d < reach) {
-          const f = 1 - d / reach;
-          const s = seed[i];
-          const nx = d > 1e-4 ? dx / d : Math.cos(s * 6.283);
-          const ny = d > 1e-4 ? dy / d : Math.sin(s * 6.283);
-          const push = f * (0.35 + s * 0.45);
-          tx += nx * push;
-          ty += ny * push;
-          tz += f * (0.4 + s * 0.9);
+        g.worldToLocal(scratch.hit);
+        const over = Math.abs(scratch.hit.x) < 2.3 && Math.abs(scratch.hit.y) < 2.2;
+        const st = trailState.current;
+        if (over && (!st.hasLast || Math.hypot(scratch.hit.x - st.lastX, scratch.hit.y - st.lastY) > TRAIL_SPACING)) {
+          const slot = trail.current[st.next];
+          slot.x = scratch.hit.x;
+          slot.y = scratch.hit.y;
+          slot.born = t;
+          slot.scale = 0.55 + Math.random() * 0.45;
+          st.next = (st.next + 1) % TRAIL_SLOTS;
+          st.lastX = scratch.hit.x;
+          st.lastY = scratch.hit.y;
+          st.hasLast = true;
         }
+        if (!over) st.hasLast = false;
       }
-      velocity[ix] = (velocity[ix] + (tx - pos[ix]) * k) * damping;
-      velocity[ix + 1] = (velocity[ix + 1] + (ty - pos[ix + 1]) * k) * damping;
-      velocity[ix + 2] = (velocity[ix + 2] + (tz - pos[ix + 2]) * k) * damping;
-      pos[ix] += velocity[ix];
-      pos[ix + 1] += velocity[ix + 1];
-      pos[ix + 2] += velocity[ix + 2];
-      glow[i] = Math.min(1, Math.hypot(pos[ix] - hx, pos[ix + 1] - hy, pos[ix + 2] - hz) * 4);
     }
-    particles.geometry.attributes.position.needsUpdate = true;
-    particles.geometry.attributes.aGlow.needsUpdate = true;
-    particles.material.uniforms.uFade.value = idle;
 
-    // Circuit nodes pulse, staggered (kept within the ember → flare range).
-    nodeRefs.current.forEach((node, i) => {
-      if (!node) return;
-      const pulse = Math.pow(Math.sin(t * 1.6 - i * 1.1) * 0.5 + 0.5, 3);
-      (node.material as THREE.MeshBasicMaterial).color.copy(EMBER).multiplyScalar(1 + pulse * 1.15);
-      node.scale.setScalar(1 + pulse * 0.3);
+    // Hole radius over its life: open fast, hold, then close smoothly.
+    const uTrail = dots.material.uniforms.uTrail.value as THREE.Vector3[];
+    trail.current.forEach((slot, i) => {
+      const age = t - slot.born;
+      const open = 1 - Math.pow(1 - Math.min(1, age / 0.14), 3);
+      const close = 1 - THREE.MathUtils.smoothstep(age, 0.45, 1.35);
+      const r = age < 0 || age > 1.35 ? 0 : HOLE_RADIUS * slot.scale * open * close * idle;
+      uTrail[i].set(slot.x, slot.y, r);
     });
-  });
 
-  const edgeWidth = quality === "high" ? 1.6 : 1.2;
+    dots.material.uniforms.uTime.value = t;
+    dots.material.uniforms.uFade.value = 0.35 + 0.65 * idle;
+  });
 
   return (
     <group ref={group} position-y={offsetY}>
-      {built.map(({ facet, geometry, position, rotation }) => {
-        const dark = facet.tone === "dark";
-        return (
-          <mesh key={facet.id} geometry={geometry} position={position} rotation={rotation} material={materials.get(facet.tone)}>
-            <Edges
-              threshold={25}
-              lineWidth={edgeWidth}
-              // Values above 1 survive tone mapping and feed the bloom pass (stays within ember → flare).
-              color={dark ? EMBER.clone().multiplyScalar(0.55) : EMBER.clone().multiplyScalar(1.9)}
-              toneMapped={false}
-            />
-          </mesh>
-        );
-      })}
-
-      <points geometry={particles.geometry} material={particles.material} frustumCulled={false} />
-
-      {traceLines.map((trace, i) => (
-        <group key={trace.id}>
-          <Line points={trace.points} color={EMBER.clone().multiplyScalar(1.2)} lineWidth={edgeWidth} toneMapped={false} />
-          <mesh
-            ref={(el) => {
-              nodeRefs.current[i] = el;
-            }}
-            position={trace.points[trace.points.length - 1]}
-          >
-            <sphereGeometry args={[0.05, 16, 12]} />
-            <meshBasicMaterial color={EMBER} toneMapped={false} />
-          </mesh>
-        </group>
-      ))}
+      <points geometry={dots.geometry} material={dots.material} frustumCulled={false} />
     </group>
   );
 }
