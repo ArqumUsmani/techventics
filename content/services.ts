@@ -55,6 +55,23 @@ export const services: Service[] = [
       "Brand guidelines",
     ],
     tools: ["Figma", "Illustrator", "InDesign", "Workshops", "Customer interviews"],
+    // Client images
+    images: [
+      {
+        src: "/images/services/brand-1.webp",
+        srcSmall: "/images/services/brand-1-800.webp",
+        alt: "Brand guidelines board: primary logo, horizontal lockup, icon, colour palette, typography and brand pattern",
+        width: 1400,
+        height: 934,
+      },
+      {
+        src: "/images/services/brand-2.webp",
+        srcSmall: "/images/services/brand-2-800.webp",
+        alt: "Branded stationery: letterhead, envelope and business cards in black and orange",
+        width: 1400,
+        height: 934,
+      },
+    ],
     relatedProject: "restaurant-brand",
   },
   {
