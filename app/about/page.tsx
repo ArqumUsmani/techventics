@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { CircuitDivider } from "@/components/motion/CircuitDivider";
 import { PageHero } from "@/components/layout/PageHero";
 import { ClosingCta } from "@/components/sections/home/ClosingCta";
+import { Manifesto } from "@/components/sections/home/Manifesto";
 import { Offices } from "@/components/sections/about/Offices";
 import { TeamGrid } from "@/components/sections/about/TeamGrid";
 import { Values } from "@/components/sections/about/Values";
@@ -26,11 +27,12 @@ export default function AboutPage() {
         </div>
       </PageHero>
       <CircuitDivider />
+      <Manifesto id="vision" index="02" eyebrow={about.vision.eyebrow} text={about.vision.text} />
       <Values />
       <TeamGrid />
       <Offices />
       <CircuitDivider flip />
-      <ClosingCta index="05" />
+      <ClosingCta index="06" />
     </>
   );
 }

@@ -12,7 +12,7 @@ export function Offices() {
   return (
     <section aria-labelledby="offices-title" className="relative overflow-x-clip bg-ink py-24 md:py-32">
       <div className="container-x">
-        <SectionHeader id="offices-title" index="04" eyebrow={eyebrow} big={big} title={title} />
+        <SectionHeader id="offices-title" index="05" eyebrow={eyebrow} big={big} title={title} />
 
         <ul className="mt-16 grid gap-6 md:mt-24 md:grid-cols-2 lg:grid-cols-12">
           {offices.map((office, i) => (

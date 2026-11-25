@@ -18,6 +18,11 @@ export const about = {
       "Today we work from Karachi, London and New York with companies in Pakistan, the UK and the US. The setup is simple: senior people on every project, a working link to click every week, and no hand-offs to strangers halfway through.",
     ],
   },
+  // Client vision statement (lit word by word on scroll). *asterisks* = ember.
+  vision: {
+    eyebrow: "Our vision",
+    text: "To bridge the gap between today's technology needs and *tomorrow's* *possibilities* through innovation, reliable IT hardware, and intelligent solutions.",
+  },
   values: {
     eyebrow: "What we believe",
     items: [

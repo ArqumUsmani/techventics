@@ -10,7 +10,7 @@ export function Values() {
   return (
     <section aria-labelledby="values-label" className="relative bg-ink py-24 md:py-32">
       <div className="container-x">
-        <Eyebrow index="02" as="h2" id="values-label">
+        <Eyebrow index="03" as="h2" id="values-label">
           {about.values.eyebrow}
         </Eyebrow>
         <ol className="mt-16 space-y-20 md:mt-24 md:space-y-28">

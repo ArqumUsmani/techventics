@@ -11,9 +11,9 @@ export const home = {
     subline: "At Techventics, we combine cutting-edge IT hardware, advanced technology, and innovative digital solutions to empower businesses for the future. From enterprise-grade IT infrastructure and hardware distribution to intelligent technology solutions, we deliver the products and expertise businesses need to operate smarter, perform better, and stay ahead in an evolving digital world.",
   },
   manifesto: {
-    eyebrow: "Our vision",
-    // Client vision statement. Words wrapped in *asterisks* light up in ember instead of bone.
-    text: "To bridge the gap between today's technology needs and *tomorrow's* *possibilities* through innovation, reliable IT hardware, and intelligent solutions.",
+    eyebrow: "Manifesto",
+    // Client manifesto. Words wrapped in *asterisks* light up in ember instead of bone.
+    text: "Our mission goes beyond supplying IT hardware. We build technology partnerships, strengthen digital infrastructure, and empower organizations to *achieve* *more* through reliable products, innovative thinking, and forward-looking solutions.",
   },
   services: {
     eyebrow: "What we do",

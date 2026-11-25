@@ -9,11 +9,19 @@ import { useReducedMotion } from "@/lib/motion";
 const BONE = "#F6F1EA";
 const EMBER = "#FC5400";
 
+type ManifestoProps = {
+  /** Defaults to the Home manifesto. */
+  eyebrow?: string;
+  text?: string;
+  index?: string;
+  id?: string;
+};
+
 /** One oversized sentence that lights up word by word (ash → bone) as you scroll. */
-export function Manifesto() {
+export function Manifesto({ eyebrow = home.manifesto.eyebrow, text = home.manifesto.text, index = "02", id = "manifesto" }: ManifestoProps) {
   const root = useRef<HTMLElement>(null);
   const reduced = useReducedMotion();
-  const words = home.manifesto.text.split(" ").map((raw) => {
+  const words = text.split(" ").map((raw) => {
     const accent = raw.startsWith("*");
     return { text: raw.replace(/\*/g, ""), accent };
   });
@@ -22,24 +30,24 @@ export function Manifesto() {
     () => {
       const els = gsap.utils.toArray<HTMLElement>("[data-word]");
       if (reduced) {
-        els.forEach((el) => (el.style.color = el.dataset.accent ? EMBER : BONE));
+        els.forEach((el) => (el.style.color = el.hasAttribute("data-accent") ? EMBER : BONE));
         return;
       }
       const tl = gsap.timeline({
         scrollTrigger: { trigger: "[data-manifesto]", start: "top 78%", end: "bottom 45%", scrub: true },
       });
       els.forEach((el, i) => {
-        tl.to(el, { color: el.dataset.accent ? EMBER : BONE, duration: 1, ease: "none" }, i * 0.6);
+        tl.to(el, { color: el.hasAttribute("data-accent") ? EMBER : BONE, duration: 1, ease: "none" }, i * 0.6);
       });
     },
-    { scope: root, dependencies: [reduced] },
+    { scope: root, dependencies: [reduced, text] },
   );
 
   return (
-    <section ref={root} id="manifesto" aria-labelledby="manifesto-label" className="relative bg-ink py-32 md:py-48">
+    <section ref={root} id={id} aria-labelledby={`${id}-label`} className="relative bg-ink py-32 md:py-48">
       <div className="container-x">
-        <Eyebrow index="02">
-          <span id="manifesto-label">{home.manifesto.eyebrow}</span>
+        <Eyebrow index={index} as="h2" id={`${id}-label`}>
+          {eyebrow}
         </Eyebrow>
         <p data-manifesto className="mt-10 font-display text-h2 font-medium leading-[1.04] text-ash">
           {words.map((w, i) => (

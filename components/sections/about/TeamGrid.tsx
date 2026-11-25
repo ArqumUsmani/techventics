@@ -11,7 +11,7 @@ export function TeamGrid() {
   return (
     <section aria-labelledby="team-title" className="relative overflow-x-clip bg-ink py-24 md:py-32">
       <div className="container-x">
-        <SectionHeader id="team-title" index="03" eyebrow={eyebrow} big={big} title={title} />
+        <SectionHeader id="team-title" index="04" eyebrow={eyebrow} big={big} title={title} />
 
         <ul className="mt-16 grid grid-cols-2 gap-x-4 gap-y-12 md:mt-24 md:grid-cols-3 lg:grid-cols-4 lg:gap-x-6">
           {members.map((m, i) => (
