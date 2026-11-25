@@ -5,7 +5,7 @@ import type { Service } from "@/content/types";
 
 /** One service on the Services page: what we do, deliverables, tools and a related case. */
 export function ServiceDetail({ service }: { service: Service }) {
-  const projectIndex = projects.findIndex((p) => p.id === service.relatedProject);
+  const projectIndex = service.relatedProject ? projects.findIndex((p) => p.id === service.relatedProject) : -1;
   const project = projects[projectIndex];
 
   return (
@@ -30,16 +30,18 @@ export function ServiceDetail({ service }: { service: Service }) {
             ))}
           </ul>
         </div>
-        <div>
-          <h3 className="label text-ash">Tools &amp; stack</h3>
-          <ul className="mt-4 flex flex-wrap gap-2">
-            {service.tools.map((t) => (
-              <li key={t} className="label border border-steel px-3 py-1.5 text-bone/80">
-                {t}
-              </li>
-            ))}
-          </ul>
-        </div>
+        {service.tools.length > 0 && (
+          <div>
+            <h3 className="label text-ash">Tools &amp; stack</h3>
+            <ul className="mt-4 flex flex-wrap gap-2">
+              {service.tools.map((t) => (
+                <li key={t} className="label border border-steel px-3 py-1.5 text-bone/80">
+                  {t}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </div>
 
       {project && (

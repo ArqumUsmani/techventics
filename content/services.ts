@@ -59,21 +59,18 @@ export const services: Service[] = [
     tools: ["Figma", "FigJam", "Protopie", "Photoshop", "Illustrator", "InDesign"],
     relatedProject: "patient-app",
   },
+  // Client copy
   {
-    id: "motion-video",
+    id: "it-hardware",
     number: "04",
-    title: "Motion & Video",
-    summary: "Explainers, brand animation and product motion that make complicated things look simple.",
-    tags: ["Explainer videos", "Brand animation", "Product motion"],
+    title: "IT Hardware Sales",
+    summary:
+      "We provide high-quality IT hardware from leading global brands, delivering reliable technology solutions for businesses of all sizes.",
+    tags: ["Enterprise IT Hardware", "Genuine Technology Products", "Business IT Infrastructure"],
     description:
-      "From a 60-second explainer to the micro-interactions in your app, we script, design and animate motion that explains the product and fits the brand.",
-    deliverables: [
-      "Explainer and launch videos",
-      "Brand animation and logo motion",
-      "Product and UI motion",
-      "Social and campaign cut-downs",
-    ],
-    tools: ["After Effects", "Cinema 4D", "Blender", "Premiere Pro", "Lottie", "Rive"],
-    relatedProject: "explainer-film",
+      "We provide high-quality IT hardware from leading global brands, delivering reliable technology solutions for businesses of all sizes.",
+    deliverables: ["Enterprise IT hardware", "Genuine technology products", "Business IT infrastructure"],
+    // To add: brands / product categories carried (shown as "Tools & stack"), and a related project.
+    tools: [],
   },
 ];

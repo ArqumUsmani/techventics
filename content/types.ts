@@ -56,10 +56,10 @@ export type Service = {
   description: string;
   /** Services page: full deliverables list. */
   deliverables: string[];
-  /** Services page: tools / stack tags. */
+  /** Services page: tools / stack tags (section hidden when empty). */
   tools: string[];
   /** Services page: id of the related case (projects.ts). */
-  relatedProject: string;
+  relatedProject?: string;
 };
 
 export type Project = {

@@ -45,7 +45,7 @@ export const projects: Project[] = [
     title: "Product explainer film",
     client: "Fintech client",
     year: "2024",
-    services: ["motion-video"],
+    services: ["design"],
     summary: "A 90-second film that explains a payments product to small business owners.",
     image: null,
     previewSrc: null,
