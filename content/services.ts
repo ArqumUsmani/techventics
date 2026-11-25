@@ -20,6 +20,16 @@ export const services: Service[] = [
       "Hosting, monitoring and support",
     ],
     tools: ["Next.js", "React", "TypeScript", "Node.js", "React Native", "Swift", "Kotlin", "PostgreSQL", "Shopify", "Sanity"],
+    // Client image
+    images: [
+      {
+        src: "/images/services/development-1.webp",
+        srcSmall: "/images/services/development-1-800.webp",
+        alt: "A terminal window showing a website project checked out from git and its development server running",
+        width: 1400,
+        height: 875,
+      },
+    ],
     relatedProject: "freight-portal",
   },
   {
