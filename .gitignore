@@ -21,3 +21,7 @@ npm-debug.log*
 
 # local brief (not part of the site)
 claude-code-prompt.md
+
+# reference material (not part of the site)
+content/*.mp4
+content/*.mov

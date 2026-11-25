@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type { Tier } from "@/components/three/useGpuTier";
-import { VMarkStage } from "@/components/three/VMarkStage";
+import { HERO_FOCUS_Y, VMarkStage } from "@/components/three/VMarkStage";
 
 type TierChoice = "auto" | Tier;
 
@@ -57,7 +57,8 @@ export function VMarkLab() {
         key={choice}
         className="!absolute inset-0"
         tier={choice === "auto" ? undefined : choice}
-        lean={lean}
+        interactive={lean}
+        focusY={HERO_FOCUS_Y}
         progressRef={progressRef}
         priority
         onStatus={onStatus}

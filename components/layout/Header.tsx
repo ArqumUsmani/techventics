@@ -7,30 +7,49 @@ import { site } from "@/content/site";
 import { Logo } from "./Logo";
 import { NavLink } from "./NavLink";
 
-const SCROLL_THRESHOLD = 40;
+/** Pages without a [data-hero] section switch to the sticky bar after this many px. */
+const DEFAULT_THRESHOLD = 320;
 
 function isActive(pathname: string, href: string) {
   return href === "/" ? pathname === "/" : pathname === href || pathname.startsWith(`${href}/`);
 }
 
+/** Scroll position after which the sticky bar shows: the bottom of the page's hero. */
+function stickyThreshold() {
+  const hero = document.querySelector<HTMLElement>("[data-hero]");
+  if (!hero) return DEFAULT_THRESHOLD;
+  const rect = hero.getBoundingClientRect();
+  return Math.max(DEFAULT_THRESHOLD, rect.bottom + window.scrollY - 64);
+}
+
 /**
- * Site header.
- * - Transparent over the hero; solid ink once the page scrolls (or the mobile menu opens).
- * - Logo box animates 125px → 50px wide in the compact state.
- * - ≤991px: hamburger opens a full-width ink dropdown under the bar, links centered at 19px.
+ * Site header, matched to the reference:
+ * - Sits at the top of the page over the hero (transparent) and scrolls away with it.
+ * - Once the hero has scrolled past, it becomes a solid ink bar fixed to the top that
+ *   slides down, with the logo shrinking 125px → 50px.
+ * - ≤991px: hamburger opens a full-width ink dropdown under the bar, links centred at 19px.
  */
 export function Header() {
   const pathname = usePathname();
-  const [scrolled, setScrolled] = useState(false);
+  const [sticky, setSticky] = useState(false);
   const [open, setOpen] = useState(false);
   const menuId = useId();
 
   useEffect(() => {
-    const onScroll = () => setScrolled(window.scrollY > SCROLL_THRESHOLD);
-    onScroll();
+    let threshold = stickyThreshold();
+    const onScroll = () => setSticky(window.scrollY > threshold);
+    const onResize = () => {
+      threshold = stickyThreshold();
+      onScroll();
+    };
+    onResize();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", onResize);
+    };
+  }, [pathname]);
 
   // Close the menu on Escape and when the viewport grows past the mobile breakpoint.
   useEffect(() => {
@@ -50,31 +69,28 @@ export function Header() {
     };
   }, [open]);
 
-  const compact = scrolled;
-  const solid = scrolled || open;
   const close = () => setOpen(false);
+  const solid = sticky || open;
 
   return (
     <header
-      data-solid={solid || undefined}
-      className={`fixed inset-x-0 top-0 z-50 border-b transition-[background-color,border-color] duration-400 ease-out-cubic ${
-        solid ? "border-steel/70 bg-ink" : "border-transparent bg-transparent"
-      }`}
+      data-sticky={sticky || undefined}
+      className={`inset-x-0 top-0 z-50 border-b transition-[background-color,border-color] duration-400 ease-out-cubic ${
+        sticky ? "fixed animate-header-in" : "absolute"
+      } ${solid ? "border-steel/70 bg-ink" : "border-transparent bg-transparent"}`}
     >
       <div
         className={`container-x flex items-center justify-between transition-[height] duration-400 ease-out-expo ${
-          compact ? "h-header-compact" : "h-header"
+          sticky ? "h-header-compact" : "h-header"
         }`}
       >
         <Link
           href="/"
           onClick={close}
           aria-label={`${site.name} home`}
-          className={`block shrink-0 transition-[width] duration-400 ease-out-expo ${
-            compact ? "w-[50px]" : "w-[125px]"
-          }`}
+          className={`block shrink-0 transition-[width] duration-400 ease-out-expo ${sticky ? "w-[50px]" : "w-[125px]"}`}
         >
-          <Logo compact={compact} />
+          <Logo compact={sticky} />
         </Link>
 
         <nav aria-label="Primary" className="hidden nav:block">

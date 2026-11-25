@@ -31,7 +31,11 @@ export const viewport: Viewport = {
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
-    <html lang="en" className={`${clash.variable} ${satoshi.variable} ${jetbrains.variable}`}>
+    <html lang="en" className={`${clash.variable} ${satoshi.variable} ${jetbrains.variable}`} suppressHydrationWarning>
+      <head>
+        {/* Marks JS as available before first paint, so reveal start states never flash. */}
+        <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+      </head>
       <body>
         <SkipLink />
         <SmoothScroll>

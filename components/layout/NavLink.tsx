@@ -9,27 +9,30 @@ type NavLinkProps = {
 };
 
 /**
- * Header link. Desktop: uppercase, `padding: 0 1rem`, 2px ember underline that grows
- * 0 → 35px on hover/focus and stays at 35px on the current page.
+ * Header link, matched to the reference: uppercase, `padding: 0 1rem`, and a 2px ember
+ * line that sits to the LEFT of the label, vertically centred. It grows 0 → 35px on
+ * hover/focus and stays at 35px on the current page. Positioned absolutely so the
+ * label never shifts.
  */
 export function NavLink({ href, label, active, variant = "desktop", onNavigate }: NavLinkProps) {
+  const line = `pointer-events-none absolute top-1/2 h-[2px] -translate-y-1/2 bg-ember transition-[width] duration-400 ease-out-expo ${
+    active ? "w-[35px]" : "w-0 group-hover:w-[35px] group-focus-visible:w-[35px]"
+  }`;
+
   if (variant === "mobile") {
     return (
       <Link
         href={href}
         onClick={onNavigate}
         aria-current={active ? "page" : undefined}
-        className={`group relative inline-flex flex-col items-center py-3 font-mono text-[19px] uppercase tracking-[0.08em] transition-colors duration-400 ease-out-cubic ${
+        className={`group relative inline-flex items-center px-4 py-3 font-mono text-[19px] uppercase tracking-[0.08em] transition-colors duration-400 ease-out-cubic ${
           active ? "text-bone" : "text-bone/75 hover:text-bone"
         }`}
       >
-        {label}
-        <span
-          aria-hidden
-          className={`mt-1 h-[2px] bg-ember transition-[width] duration-400 ease-out-expo ${
-            active ? "w-[35px]" : "w-0 group-hover:w-[35px] group-focus-visible:w-[35px]"
-          }`}
-        />
+        <span className="relative">
+          <span aria-hidden className={`${line} right-[calc(100%+10px)]`} />
+          {label}
+        </span>
       </Link>
     );
   }
@@ -43,13 +46,10 @@ export function NavLink({ href, label, active, variant = "desktop", onNavigate }
         active ? "text-bone" : "text-bone/75 hover:text-bone"
       }`}
     >
-      {label}
-      <span
-        aria-hidden
-        className={`absolute bottom-0 left-4 h-[2px] bg-ember transition-[width] duration-400 ease-out-expo ${
-          active ? "w-[35px]" : "w-0 group-hover:w-[35px] group-focus-visible:w-[35px]"
-        }`}
-      />
+      <span className="relative">
+        <span aria-hidden className={`${line} right-[calc(100%+8px)]`} />
+        {label}
+      </span>
     </Link>
   );
 }
