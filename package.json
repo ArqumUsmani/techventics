@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
-    "start": "next start",
+    "preview": "npx --yes serve@14 out -l 3100",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
     "capture:vmark": "node scripts/capture-fallback.mjs vmark",
@@ -19,10 +19,8 @@
     "gsap": "^3.15.1",
     "lenis": "^1.3.28",
     "next": "15.5.29",
-    "nodemailer": "^10.6.1",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "resend": "^6.39.0",
     "three": "^0.187.0",
     "zod": "^4.6.7"
   },
@@ -30,7 +28,6 @@
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4.3.5",
     "@types/node": "^22",
-    "@types/nodemailer": "^8.0.2",
     "@types/react": "^19",
     "@types/react-dom": "^19",
     "@types/three": "^0.187.0",

@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { useEffect, useRef, useState } from "react";
 import type { Office } from "@/content/types";
 import { useGpuTier, type Tier } from "./useGpuTier";
@@ -9,6 +8,7 @@ import { useGpuTier, type Tier } from "./useGpuTier";
 const GlobeScene = dynamic(() => import("./GlobeScene"), { ssr: false });
 
 export const GLOBE_FALLBACK = "/images/globe-fallback.webp";
+const GLOBE_FALLBACK_SMALL = "/images/globe-fallback-500.webp";
 
 type GlobeStageProps = {
   offices: Office[];
@@ -61,13 +61,17 @@ export function GlobeStage({ offices, hubId, tier: forced, interactive = true, c
       aria-label={`Globe showing Techventics offices in ${names}, connected from ${offices.find((o) => o.id === hubId)?.city ?? "head office"}.`}
       className={`relative aspect-square ${className}`}
     >
-      <Image
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src={GLOBE_FALLBACK}
-        alt=""
-        fill
+        srcSet={`${GLOBE_FALLBACK_SMALL} 500w, ${GLOBE_FALLBACK} 1000w`}
         sizes="(min-width: 1024px) 34rem, 90vw"
-        priority={priority}
-        className={`object-contain transition-opacity duration-600 ease-out-cubic ${showCanvas && ready ? "opacity-0" : "opacity-100"}`}
+        alt=""
+        width={1000}
+        height={1000}
+        decoding="async"
+        loading={priority ? "eager" : "lazy"}
+        className={`absolute inset-0 h-full w-full object-contain transition-opacity duration-600 ease-out-cubic ${showCanvas && ready ? "opacity-0" : "opacity-100"}`}
       />
       {showCanvas && (
         <div className={`absolute inset-0 transition-opacity duration-600 ease-out-cubic ${ready ? "opacity-100" : "opacity-0"}`}>

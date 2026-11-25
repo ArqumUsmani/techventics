@@ -2,12 +2,13 @@
 import * as z from "zod/mini";
 
 const text = (min: number, max: number, minMsg: string, maxMsg: string) =>
-  z.string().check(z.trim(), z.minLength(min, minMsg), z.maxLength(max, maxMsg));
+  // `error` covers a missing / non-string field with the same message as an empty one.
+  z.string({ error: minMsg }).check(z.trim(), z.minLength(min, minMsg), z.maxLength(max, maxMsg));
 
 /** Shared by the form (inline validation) and the API route (server validation). */
 export const contactSchema = z.object({
   name: text(2, 100, "Please enter your name.", "That name is too long."),
-  email: z.string().check(z.trim(), z.maxLength(200, "That email is too long."), z.email("Please enter a valid email address.")),
+  email: z.string({ error: "Please enter a valid email address." }).check(z.trim(), z.maxLength(200, "That email is too long."), z.email("Please enter a valid email address.")),
   company: z.optional(z.string().check(z.trim(), z.maxLength(120, "That is too long."))),
   service: text(1, 120, "Please choose a service.", "Please choose a service."),
   budget: text(1, 120, "Please choose a budget range.", "Please choose a budget range."),

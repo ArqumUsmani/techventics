@@ -7,3 +7,6 @@ export const contentType = ogContentType;
 export default function OpenGraphImage() {
   return renderOg({ eyebrow: "Contact", title: "Tell us what you’re building." });
 }
+
+// Generated once at build time (static export).
+export const dynamic = "force-static";

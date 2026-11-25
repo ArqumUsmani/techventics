@@ -4,8 +4,8 @@
  * used for reduced motion, weak GPUs and first paint.
  *
  * Usage (with `npm run dev` running):
- *   npm run capture:vmark   → public/images/vmark-fallback.webp  (hero mark)
- *   npm run capture:globe   → public/images/globe-fallback.webp  (Home globe)
+ *   npm run capture:vmark   → public/images/vmark-fallback.webp (+ -960)  (hero mark)
+ *   npm run capture:globe   → public/images/globe-fallback.webp (+ -500)  (Home globe)
  * Options (env): BASE_URL (default http://localhost:3000), CHROME_PATH.
  * Re-run after changing a scene (e.g. when the real logo SVG is dropped in).
  */
@@ -19,8 +19,9 @@ import sharp from "sharp";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const TARGETS = {
-  vmark: { path: "/capture/vmark?capture=1&tier=high", flag: "vmarkLive", out: "vmark-fallback.webp", width: 1920, height: 1200 },
-  globe: { path: "/capture/globe?capture=1", flag: "globeLive", out: "globe-fallback.webp", width: 1000, height: 1000 },
+  // small: a half-size copy for phones (used via srcset, as there is no image optimiser on static hosting)
+  vmark: { path: "/capture/vmark?capture=1&tier=high", flag: "vmarkLive", out: "vmark-fallback.webp", width: 1920, height: 1200, small: 960 },
+  globe: { path: "/capture/globe?capture=1", flag: "globeLive", out: "globe-fallback.webp", width: 1000, height: 1000, small: 500 },
 };
 const name = process.argv[2] ?? "vmark";
 const target = TARGETS[name];
@@ -105,8 +106,12 @@ async function main() {
 
   const shot = await send("Page.captureScreenshot", { format: "png", captureBeyondViewport: false });
   mkdirSync(dirname(OUT), { recursive: true });
-  const info = await sharp(Buffer.from(shot.result.data, "base64")).webp({ quality: 82, effort: 6 }).toFile(OUT);
+  const png = Buffer.from(shot.result.data, "base64");
+  const info = await sharp(png).webp({ quality: 82, effort: 6 }).toFile(OUT);
   console.log(`Saved ${OUT} (${info.width}×${info.height}, ${(info.size / 1024).toFixed(0)} KB)`);
+  const smallOut = OUT.replace(".webp", `-${target.small}.webp`);
+  const small = await sharp(png).resize({ width: target.small }).webp({ quality: 80, effort: 6 }).toFile(smallOut);
+  console.log(`Saved ${smallOut} (${small.width}×${small.height}, ${(small.size / 1024).toFixed(0)} KB)`);
   ws.close();
 }
 

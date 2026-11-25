@@ -2,8 +2,11 @@
 
 Marketing site for Techventics: Home, About, Services and Contact.
 Built with Next.js 15 (App Router), React 19, TypeScript, Tailwind CSS v4, three.js
-(@react-three/fiber + drei), GSAP + ScrollTrigger and Lenis. Every page is statically
-generated; the only server code is the contact form endpoint.
+(@react-three/fiber + drei), GSAP + ScrollTrigger and Lenis.
+
+**Hosting: cPanel, as static files.** `npm run build` exports the whole site to `out/`
+(plain HTML, JS, CSS and images), which is uploaded to `public_html`. The only server-side
+code is `contact.php`, which emails contact-form enquiries through cPanel's own mail server.
 
 ---
 
@@ -13,7 +16,7 @@ Requirements: **Node.js 20.9 or newer** (tested on Node 26).
 
 ```bash
 npm install
-cp .env.example .env.local   # then fill in the values (see section 3)
+cp .env.example .env.local   # sets the public site URL (no secrets needed)
 npm run dev                  # http://localhost:3000
 ```
 
@@ -21,8 +24,8 @@ Other commands:
 
 | Command | What it does |
 | --- | --- |
-| `npm run build` | Production build (also type-checks and lints) |
-| `npm start` | Serve the production build locally |
+| `npm run build` | Static export to `out/` (also type-checks and lints): this is what you upload |
+| `npm run preview` | Serve `out/` locally at http://localhost:3100 to check the build |
 | `npm run lint` / `npm run typecheck` | Lint / type-check only |
 | `npm run capture:vmark` | Re-render the hero mark's static fallback image (dev server must be running) |
 | `npm run capture:globe` | Re-render the globe's static fallback image (dev server must be running) |
@@ -61,71 +64,92 @@ Images:
 
 ## 3. Contact form email
 
-The form posts to `/api/contact`, which validates the input (zod), drops spam (hidden
-honeypot field, minimum fill time, basic rate limit) and emails the enquiry with the
-sender set as Reply-To.
+The form posts to [`public/contact.php`](public/contact.php), which ships with the site.
+It does the following:
 
-It sends through **SMTP** if `SMTP_*` is set, otherwise through **Resend** if
-`RESEND_API_KEY` is set. In development with neither, the message is printed in the
-terminal instead.
+- validates the input with the same rules as the browser;
+- drops spam: a hidden honeypot field, a minimum fill time, 5 messages per IP per
+  10 minutes, and posts from other websites;
+- emails the enquiry with PHP `mail()`, which cPanel delivers through its own mail
+  server. The visitor's address is set as Reply-To.
 
-### Option A: cPanel mailbox over SMTP (current setup)
+**No password or API key is needed or stored.** The addresses are at the top of
+`contact.php`:
 
-In `.env.local` (and on Vercel, see below):
-
-```env
-CONTACT_TO_EMAIL=Info@techventics.com      # must be a real mailbox or forwarder in cPanel
-SMTP_HOST=mail.techventics.com             # cPanel → Email Accounts → Connect Devices
-SMTP_PORT=465                              # 465 = SSL, 587 = STARTTLS
-SMTP_USER=techandk@techventics.com
-SMTP_PASS=…                                # the mailbox password
+```php
+const CONTACT_TO   = 'Info@techventics.com';      // where enquiries go
+const CONTACT_FROM = 'techandk@techventics.com';  // sender: a real mailbox on this domain
 ```
 
-In cPanel → **Email Deliverability**, make sure SPF and DKIM are valid, so enquiries
-don't land in spam.
+Checklist in cPanel:
 
-### Option B: Resend
+1. **Email Accounts / Forwarders:** `Info@techventics.com` must exist, as a mailbox or as a
+   forwarder to one. Otherwise change `CONTACT_TO`.
+2. **Email Deliverability:** SPF and DKIM for techventics.com should show as valid, so
+   enquiries don't land in spam.
+3. After uploading, send a test from the Contact page and check the inbox (and spam).
 
-Leave `SMTP_*` empty and set `RESEND_API_KEY`. To send from your own domain, verify
-`techventics.com` in Resend and set `CONTACT_FROM_EMAIL="Techventics Website <website@techventics.com>"`.
-Until then Resend's test sender only delivers to the Resend account owner.
-
-**Never commit `.env.local`** (it is git-ignored).
+In `npm run dev`, the form posts to a local stand-in (`app/api/contact/route.dev.ts`)
+that validates and prints the enquiry in the terminal, because PHP doesn't run in the
+Next.js dev server.
 
 ---
 
-## 4. Deploy to Vercel (free tier)
+## 4. Deploy to cPanel
 
-1. Push this repository to GitHub (already done: `ArqumUsmani/techventics`).
-2. On [vercel.com](https://vercel.com) → **Add New → Project** → import the repository.
-   Framework preset: Next.js. No build settings need changing.
-3. **Settings → Environment Variables**: add the same variables as `.env.local`, plus
-   `NEXT_PUBLIC_SITE_URL=https://techventics.com` (used for canonical URLs, sitemap and
-   share images).
-4. Deploy. Every push to `main` deploys to production; pull requests get preview URLs.
+1. Check `NEXT_PUBLIC_SITE_URL=https://techventics.com` in `.env.local`. It is baked into
+   canonical URLs, the sitemap and share images.
+2. Build:
+   ```bash
+   npm run build        # creates out/
+   npm run preview      # optional: check it at http://localhost:3100
+   ```
+3. Upload the **contents** of `out/` (not the folder itself) to `public_html`. In
+   cPanel → **File Manager**, the simplest way is:
+   - zip the contents of `out/`;
+   - upload the zip to `public_html`;
+   - choose **Extract**;
+   - delete the zip.
 
-### Point techventics.com at Vercel (keep email on cPanel)
+   Turn on **Settings → Show Hidden Files**, so you can confirm `.htaccess` arrived.
 
-Email for `@techventics.com` is hosted on cPanel, so **do not move the domain's
-nameservers to Vercel**: change only the website records, and leave the MX records alone.
+   Use a zip tool that writes standard `/` paths, such as 7-Zip, macOS Finder, or Windows' built-in `tar`:
+   ```powershell
+   tar -a -c -f techventics-upload.zip -C out .htaccess *
+   ```
+   Don't use PowerShell's `Compress-Archive` or .NET `ZipFile`. They write `\` paths, and
+   cPanel would extract those as single files with odd names instead of folders.
+4. Remove old files from previous uploads, but keep `.well-known/` (used for SSL) and
+   anything else cPanel created.
+5. Open https://techventics.com and click through the pages. Then send a test message
+   from the Contact page.
 
-1. In Vercel → Project → **Settings → Domains**, add `techventics.com` and `www.techventics.com`.
-2. In cPanel → **Zone Editor** for techventics.com:
-   - `A` record for `techventics.com` (`@`) → `76.76.21.21`
-   - `CNAME` record for `www` → `cname.vercel-dns.com`
-   - Remove any other `A`/`AAAA` record for `@` or `www` that points at the old hosting.
-   - **Leave the `MX`, `mail`, SPF (`TXT`) and DKIM records unchanged.**
-3. Wait for DNS (minutes to a few hours). Vercel issues the HTTPS certificate automatically.
-   Use the values Vercel shows on the Domains page if they differ from the ones above.
+The site must sit at the **root** of the domain, not in a sub-folder, because the
+`.htaccess` rules assume it.
+
+[`public/.htaccess`](public/.htaccess) is copied into the build automatically. It:
+
+- serves clean URLs: `/about` serves `about.html`;
+- forces HTTPS and redirects `www` to the bare domain;
+- uses the custom 404 page;
+- turns on compression and long-term caching for the hashed build files;
+- adds basic security headers.
+
+If the domain has no SSL certificate yet (cPanel → **SSL/TLS Status** → run AutoSSL),
+comment out the three "Force HTTPS" lines until it does.
+
+Each content change means: edit the files in `content/`, run `npm run build`, and upload
+`out/` again.
 
 ---
 
 ## 5. How it's put together
 
 ```
-app/                    Routes (Home, About, Services, Contact), API route, SEO files
-  api/contact/          Contact form endpoint
-  capture/              Dev-only pages used to render the 3D fallback images (404 in production)
+app/                    Routes (Home, About, Services, Contact), SEO files
+  api/contact/          route.dev.ts: dev-only stand-in for contact.php
+  capture/              page.dev.tsx: dev-only pages that render the 3D fallback images
+                        (*.dev.* files are routes in `next dev` only; see next.config.ts)
   sitemap.ts, robots.ts, manifest.ts, opengraph-image.tsx, apple-icon.tsx, icon.svg
 components/
   layout/               Header (reference-matched nav), footer, page hero, logo
@@ -136,9 +160,11 @@ components/
   three/                3D: dotted V mark + hero scene, globe, device tiers
   ui/                   Buttons, cards, accordion, section header, live clock
 content/                All editable copy and data
-lib/                    GSAP setup, motion hooks, contact schema, mailer, share-image renderer
+lib/                    GSAP setup, motion hooks, contact schema, share-image renderer
 public/fonts/           Self-hosted Clash Display, Satoshi, JetBrains Mono (+ licenses)
-public/images/          Static fallbacks for the 3D scenes
+public/images/          Static fallbacks for the 3D scenes (full + half size)
+public/contact.php      Contact form mailer (runs on cPanel)
+public/.htaccess        Apache rules for the live site
 scripts/                capture-fallback.mjs
 ```
 

@@ -16,3 +16,6 @@ export default function AppleIcon() {
     size,
   );
 }
+
+// Generated once at build time (static export).
+export const dynamic = "force-static";

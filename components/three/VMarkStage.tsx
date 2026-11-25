@@ -1,7 +1,6 @@
 "use client";
 
 import dynamic from "next/dynamic";
-import Image from "next/image";
 import { useEffect, useRef, useState, type RefObject } from "react";
 import { useGpuTier, type Tier } from "./useGpuTier";
 
@@ -9,6 +8,7 @@ import { useGpuTier, type Tier } from "./useGpuTier";
 const VMarkScene = dynamic(() => import("./VMarkScene"), { ssr: false });
 
 export const VMARK_FALLBACK = "/images/vmark-fallback.webp";
+const VMARK_FALLBACK_SMALL = "/images/vmark-fallback-960.webp";
 
 /** Where the mark sits in the home hero (fraction of height from the top), matched to the reference. */
 export const HERO_FOCUS_Y = 0.54;
@@ -107,13 +107,18 @@ export function VMarkStage({
     <div ref={root} aria-hidden className={`relative overflow-hidden bg-ink ${className}`}>
       {/* Sized like the live camera frames the mark: full height on wide screens,
           ~78% of the width on narrow ones (the render is 1920×1200 on ink, so edges blend). */}
-      <Image
+      {/* Plain <img> + srcset: static hosting has no image optimiser, so both sizes are pre-rendered. */}
+      {/* eslint-disable-next-line @next/next/no-img-element */}
+      <img
         src={VMARK_FALLBACK}
+        srcSet={`${VMARK_FALLBACK_SMALL} 960w, ${VMARK_FALLBACK} 1920w`}
+        sizes="(max-width: 1023px) 150vw, 100vw"
         alt=""
         width={1920}
         height={1200}
-        priority={priority}
-        sizes="(max-width: 1023px) 150vw, 100vw"
+        decoding="async"
+        loading={priority ? "eager" : "lazy"}
+        fetchPriority={priority ? "high" : "auto"}
         className={`absolute left-1/2 top-1/2 h-[min(100%,93.75vw)] w-auto max-w-none -translate-x-1/2 -translate-y-1/2 transition-opacity duration-600 ease-out-cubic ${
           showCanvas && ready ? "opacity-0" : "opacity-100"
         }`}

@@ -13,6 +13,9 @@ const ORDER: ContactField[] = ["name", "email", "company", "service", "budget", 
 const EMPTY: Values = { name: "", email: "", company: "", service: "", budget: "", message: "" };
 const MAX_MESSAGE = 5000;
 
+// Live (cPanel static hosting): public/contact.php. `next dev`: app/api/contact/route.dev.ts.
+const ENDPOINT = process.env.NODE_ENV === "development" ? "/api/contact" : "/contact.php";
+
 const inputClass =
   "w-full border-b border-steel bg-transparent py-3 text-body text-bone outline-none transition-[border-color,box-shadow] duration-300 placeholder:text-ash focus:border-ember focus:shadow-[0_1px_0_0_#FC5400] focus-visible:outline-none aria-[invalid=true]:border-ember";
 
@@ -59,7 +62,7 @@ export function ContactForm() {
     setServerMessage("");
     const website = (form.current?.elements.namedItem("website") as HTMLInputElement | null)?.value ?? "";
     try {
-      const res = await fetch("/api/contact", {
+      const res = await fetch(ENDPOINT, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ...values, website, startedAt: startedAt.current }),

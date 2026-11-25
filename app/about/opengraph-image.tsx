@@ -7,3 +7,6 @@ export const contentType = ogContentType;
 export default function OpenGraphImage() {
   return renderOg({ eyebrow: "About", title: "A studio built across three time zones." });
 }
+
+// Generated once at build time (static export).
+export const dynamic = "force-static";

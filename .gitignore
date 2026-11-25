@@ -25,3 +25,6 @@ claude-code-prompt.md
 # reference material (not part of the site)
 content/*.mp4
 content/*.mov
+
+# upload packages
+*.zip

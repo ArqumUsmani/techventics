@@ -8,3 +8,6 @@ export default function robots(): MetadataRoute.Robots {
     host: site.url,
   };
 }
+
+// Generated once at build time (static export).
+export const dynamic = "force-static";
