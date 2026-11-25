@@ -58,6 +58,11 @@ export type Service = {
   deliverables: string[];
   /** Services page: tools / stack tags (section hidden when empty). */
   tools: string[];
+  /**
+   * Optional images: the first shows on the Home services card, all show on the Services page.
+   * src = full size (~1400px wide), srcSmall = ~800px for phones.
+   */
+  images?: { src: string; srcSmall: string; alt: string; width: number; height: number }[];
   /** Services page: id of the related case (projects.ts). */
   relatedProject?: string;
 };

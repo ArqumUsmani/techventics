@@ -74,7 +74,24 @@ export function ServicesTrack() {
                 <span className="label text-ash">Service</span>
               </div>
 
-              <div className="mt-16">
+              {s.images?.[0] && (
+                <div className={`relative mt-6 overflow-hidden border border-steel ${horizontal ? "min-h-0 flex-1" : "aspect-[16/9]"}`}>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src={s.images[0].src}
+                    srcSet={`${s.images[0].srcSmall} 800w, ${s.images[0].src} ${s.images[0].width}w`}
+                    sizes="(min-width: 62rem) 30rem, 100vw"
+                    alt={s.images[0].alt}
+                    width={s.images[0].width}
+                    height={s.images[0].height}
+                    loading="lazy"
+                    decoding="async"
+                    className="absolute inset-0 h-full w-full object-cover transition-transform duration-600 ease-out-expo group-hover:scale-[1.03]"
+                  />
+                </div>
+              )}
+
+              <div className={s.images?.[0] ? "mt-6" : "mt-16"}>
                 <h3 className="text-h3 text-bone">{s.title}</h3>
                 <p className="mt-4 max-w-[34ch] text-small text-ash">{s.summary}</p>
                 <ul className="mt-8 flex flex-wrap gap-2" aria-label={`${s.title} deliverables`}>

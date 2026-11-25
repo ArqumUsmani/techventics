@@ -16,6 +16,32 @@ export function ServiceDetail({ service }: { service: Service }) {
       </SplitReveal>
       <p className="measure mt-6 text-lead text-ash">{service.description}</p>
 
+      {service.images && service.images.length > 0 && (
+        <div className="mt-12 grid gap-4 md:grid-cols-12">
+          {service.images.map((img, i) => (
+            <figure
+              key={img.src}
+              className={`relative aspect-[16/9] overflow-hidden border border-steel ${
+                service.images!.length === 1 ? "md:col-span-12" : i % 2 === 0 ? "md:col-span-7" : "md:col-span-5 md:mt-16"
+              }`}
+            >
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={img.src}
+                srcSet={`${img.srcSmall} 800w, ${img.src} ${img.width}w`}
+                sizes="(min-width: 1024px) 40vw, 100vw"
+                alt={img.alt}
+                width={img.width}
+                height={img.height}
+                loading="lazy"
+                decoding="async"
+                className="absolute inset-0 h-full w-full object-cover"
+              />
+            </figure>
+          ))}
+        </div>
+      )}
+
       <div className="mt-12 grid gap-12 md:grid-cols-2">
         <div>
           <h3 className="label text-ash">Deliverables</h3>

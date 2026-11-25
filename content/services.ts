@@ -57,6 +57,23 @@ export const services: Service[] = [
       "Print and packaging",
     ],
     tools: ["Figma", "FigJam", "Protopie", "Photoshop", "Illustrator", "InDesign"],
+    // Client images
+    images: [
+      {
+        src: "/images/services/design-1.webp",
+        srcSmall: "/images/services/design-1-800.webp",
+        alt: "An ornate fountain pen and a digital stylus meeting in a burst of orange geometric shards",
+        width: 1376,
+        height: 768,
+      },
+      {
+        src: "/images/services/design-2.webp",
+        srcSmall: "/images/services/design-2-800.webp",
+        alt: "Orange and white hand-drawn swirls breaking apart into geometric fragments",
+        width: 1400,
+        height: 764,
+      },
+    ],
     relatedProject: "patient-app",
   },
   // Client copy
