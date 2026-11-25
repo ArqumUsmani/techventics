@@ -5,12 +5,12 @@ import { home } from "@/content/home";
 import { site } from "@/content/site";
 
 /** Closing call to action. The button becomes magnetic in step 6. */
-export function ClosingCta() {
+export function ClosingCta({ index = "08" }: { index?: string }) {
   const { eyebrow, headline, body, cta } = home.closing;
   return (
     <section id="start" aria-labelledby="start-title" className="relative overflow-hidden bg-ink py-28 md:py-40">
       <div className="container-x">
-        <Eyebrow index="08">{eyebrow}</Eyebrow>
+        <Eyebrow index={index}>{eyebrow}</Eyebrow>
         <SplitReveal
           id="start-title"
           className="mt-8 font-display text-[clamp(3rem,1.2rem+7.6vw,9.5rem)] font-bold uppercase leading-[0.9] tracking-[-0.02em] text-bone"

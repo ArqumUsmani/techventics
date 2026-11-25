@@ -42,7 +42,7 @@ export function NavLink({ href, label, active, variant = "desktop", onNavigate }
       href={href}
       onClick={onNavigate}
       aria-current={active ? "page" : undefined}
-      className={`group relative inline-flex items-center px-4 py-2 label transition-colors duration-400 ease-out-cubic ${
+      className={`group relative inline-flex items-center px-6 py-2 label transition-colors duration-400 ease-out-cubic ${
         active ? "text-bone" : "text-bone/75 hover:text-bone"
       }`}
     >

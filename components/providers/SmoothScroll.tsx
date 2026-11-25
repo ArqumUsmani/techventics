@@ -21,7 +21,6 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
   const reduced = useReducedMotion();
   const [lenis, setLenis] = useState<Lenis | null>(null);
   const pathname = usePathname();
-  const firstPath = useRef(true);
 
   useEffect(() => {
     if (reduced) return;
@@ -47,14 +46,23 @@ export function SmoothScroll({ children }: { children: ReactNode }) {
     };
   }, [reduced]);
 
-  // Route change: jump to top (Lenis keeps its own target position otherwise).
+  // Route change only (not the first render, not Lenis starting up): go to the top,
+  // or to the #hash target when the link had one (e.g. /services#design).
+  const lastPath = useRef(pathname);
   useEffect(() => {
-    if (firstPath.current) {
-      firstPath.current = false;
-      return;
-    }
-    lenis?.scrollTo(0, { immediate: true, force: true });
-    ScrollTrigger.refresh();
+    if (lastPath.current === pathname) return;
+    lastPath.current = pathname;
+    const id = decodeURIComponent(window.location.hash.slice(1));
+    requestAnimationFrame(() => {
+      ScrollTrigger.refresh();
+      const target = id ? document.getElementById(id) : null;
+      if (target) {
+        if (lenis) lenis.scrollTo(target, { immediate: true, force: true, offset: -80 });
+        else target.scrollIntoView();
+      } else {
+        lenis?.scrollTo(0, { immediate: true, force: true });
+      }
+    });
   }, [pathname, lenis]);
 
   return <LenisContext.Provider value={lenis}>{children}</LenisContext.Provider>;
