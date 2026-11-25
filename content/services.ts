@@ -29,6 +29,13 @@ export const services: Service[] = [
         width: 1400,
         height: 875,
       },
+      {
+        src: "/images/services/development-2.webp",
+        srcSmall: "/images/services/development-2-800.webp",
+        alt: "A code editor with an Express API route open and the development server running in the terminal",
+        width: 1400,
+        height: 875,
+      },
     ],
     relatedProject: "freight-portal",
   },
