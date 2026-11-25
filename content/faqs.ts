@@ -16,7 +16,7 @@ export const faqs: Faq[] = [
   {
     question: "Do you work with clients outside Pakistan?",
     answer:
-      "Yes. We work with companies in the UK, the US and Pakistan, with teams in London and New York for meetings in your time zone.",
+      "Yes. We work with companies in the UK, the US and Pakistan, with teams in Scotland and Texas for meetings in your time zone.",
   },
   {
     question: "Who owns the designs and the code?",

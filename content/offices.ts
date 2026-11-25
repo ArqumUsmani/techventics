@@ -16,19 +16,19 @@ export const offices: Office[] = [
     coordinates: { lat: 24.8762, lng: 67.0727 },
   },
   {
-    id: "london",
-    city: "London",
+    id: "scotland",
+    city: "Scotland",
     country: "United Kingdom",
     timeZone: "Europe/London",
-    address: null, // PLACEHOLDER: address to be supplied
-    coordinates: { lat: 51.5072, lng: -0.1276 },
+    address: ["Scotland, United Kingdom"], // full street address to be supplied
+    coordinates: { lat: 55.9, lng: -3.6 },
   },
   {
-    id: "new-york",
-    city: "New York",
+    id: "texas",
+    city: "Texas",
     country: "United States",
-    timeZone: "America/New_York",
-    address: null, // PLACEHOLDER: address to be supplied
-    coordinates: { lat: 40.7128, lng: -74.006 },
+    timeZone: "America/Chicago", // Central time (most of Texas)
+    address: ["Texas, United States"], // full street address to be supplied
+    coordinates: { lat: 31.0, lng: -99.3 },
   },
 ];

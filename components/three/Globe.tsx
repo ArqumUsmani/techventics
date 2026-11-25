@@ -84,7 +84,7 @@ type GlobeProps = {
   labelsRef?: RefObject<(HTMLElement | null)[]>;
 };
 
-export function Globe({ offices, hubId, quality, centerLng = -4, interactive = true, labelsRef }: GlobeProps) {
+export function Globe({ offices, hubId, quality, centerLng = -16, interactive = true, labelsRef }: GlobeProps) {
   const spin = useRef<THREE.Group>(null);
   const pulseRefs = useRef<(THREE.Mesh | null)[]>([]);
   const travelRefs = useRef<(THREE.Mesh | null)[]>([]);
@@ -159,8 +159,10 @@ export function Globe({ offices, hubId, quality, centerLng = -4, interactive = t
       pointer.current.y = THREE.MathUtils.damp(pointer.current.y, state.pointer.y, 3, delta);
     }
     // Gentle sway around the offices' longitudes rather than a full spin, so they stay in view.
-    g.rotation.y = -(centerLng + Math.sin(t * 0.12) * 12) * DEG + pointer.current.x * 0.25;
-    // ~35° tilt puts the view centre near 35°N, so NY, London and Karachi all face the viewer.
+    // Non-interactive (static capture) holds the centre, where all three offices face the viewer.
+    const sway = interactive ? Math.sin(t * 0.12) * 30 : 0;
+    g.rotation.y = -(centerLng + sway) * DEG + pointer.current.x * 0.25;
+    // ~35° tilt puts the view centre near 35°N; the wider sway brings Texas and Karachi into view in turn.
     g.rotation.x = 0.6 + pointer.current.y * -0.12;
 
     // Pin pulse rings

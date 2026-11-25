@@ -78,7 +78,7 @@ export function Hero({ children }: { children: ReactNode }) {
 
       <section ref={hero} data-hero aria-label="Introduction" className="relative min-h-[max(100svh,900px)]">
         <h1 className="absolute inset-x-0 bottom-[12%] text-center">
-          <span className="sr-only">Techventics, a studio for web, mobile, brand and motion</span>
+          <span className="sr-only">Techventics: IT hardware, development, brand and design</span>
           <span
             aria-hidden
             className="inline-flex font-display text-[clamp(1.5rem,3.1vw,3.25rem)] font-medium uppercase leading-none tracking-[0.38em] [margin-right:-0.38em] [text-shadow:0_0_18px_rgba(11,11,11,0.95),0_0_4px_rgba(11,11,11,0.9)]"

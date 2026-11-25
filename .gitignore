@@ -28,3 +28,6 @@ content/*.mov
 
 # upload packages
 *.zip
+
+# original client images (converted copies live in public/images)
+/source-images/

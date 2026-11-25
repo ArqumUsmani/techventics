@@ -15,7 +15,7 @@ export const about = {
     // SAMPLE founding story (2 short paragraphs)
     story: [
       "Techventics started in Karachi as a small team of developers and designers who were tired of handing clients half-finished work. We wanted one studio where the people who plan a product are the same people who design it, build it and keep it running.",
-      "Today we work from Karachi, London and New York with companies in Pakistan, the UK and the US. The setup is simple: senior people on every project, a working link to click every week, and no hand-offs to strangers halfway through.",
+      "Today we work from Karachi, Scotland and Texas with companies in Pakistan, the UK and the US. The setup is simple: senior people on every project, a working link to click every week, and no hand-offs to strangers halfway through.",
     ],
   },
   // Client vision statement (lit word by word on scroll). *asterisks* = ember.
@@ -50,7 +50,7 @@ export const about = {
       { name: "Team member", role: "Design Lead", photo: null, placeholder: true },
       { name: "Team member", role: "Engineering Lead", photo: null, placeholder: true },
       { name: "Team member", role: "Brand Strategist", photo: null, placeholder: true },
-      { name: "Team member", role: "Motion Designer", photo: null, placeholder: true },
+      { name: "Team member", role: "IT Hardware Specialist", photo: null, placeholder: true },
       { name: "Team member", role: "Mobile Developer", photo: null, placeholder: true },
       { name: "Team member", role: "Project Manager", photo: null, placeholder: true },
       { name: "Team member", role: "UI/UX Designer", photo: null, placeholder: true },

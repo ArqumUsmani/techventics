@@ -5,7 +5,7 @@ export const size = ogSize;
 export const contentType = ogContentType;
 
 export default function OpenGraphImage() {
-  return renderOg({ eyebrow: "Services", title: "Development, brand, design, motion." });
+  return renderOg({ eyebrow: "Services", title: "Development, brand, design, IT hardware." });
 }
 
 // Generated once at build time (static export).

@@ -10,7 +10,7 @@ import { about } from "@/content/about";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "Who Techventics is, what we believe and where we work: a design and development studio in Karachi, London and New York.",
+  description: "Who Techventics is, what we believe and where we work: a design and development studio in Karachi, Scotland and Texas.",
   alternates: { canonical: "/about" },
 };
 

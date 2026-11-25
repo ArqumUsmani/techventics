@@ -25,7 +25,7 @@ export function GlobalPresence() {
           </ul>
         </div>
 
-        {/* Dotted 3D globe: pins on each office, arcs from the HQ to London and New York */}
+        {/* Dotted 3D globe: pins on each office, arcs from the HQ to Scotland and Texas */}
         <div className="lg:col-span-6 lg:self-center">
           <GlobeStage offices={offices} hubId={offices.find((o) => o.isHeadquarters)?.id ?? offices[0].id} className="mx-auto w-full max-w-[34rem]" />
         </div>

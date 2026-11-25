@@ -12,7 +12,7 @@ import { services } from "@/content/services";
 export const metadata: Metadata = {
   title: "Services",
   description:
-    "Development, brand identity, design, and motion and video: websites, apps, identity systems, UI/UX and explainer films from Techventics.",
+    "Development, brand identity, design and IT hardware sales: websites, apps, identity systems, UI/UX, servers, networking and workstations from Techventics.",
   alternates: { canonical: "/services" },
 };
 

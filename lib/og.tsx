@@ -56,7 +56,7 @@ export async function renderOg({ eyebrow, title }: { eyebrow: string; title: str
             {title}
           </div>
           <div style={{ display: "flex", justifyContent: "space-between", marginTop: 44, fontFamily: "Mono", fontSize: 20, letterSpacing: 2, color: "#8A8580" }}>
-            <span>KARACHI · LONDON · NEW YORK</span>
+            <span>KARACHI · SCOTLAND · TEXAS</span>
             <span>TECHVENTICS.COM</span>
           </div>
         </div>

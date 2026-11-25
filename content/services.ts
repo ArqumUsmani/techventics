@@ -108,7 +108,7 @@ export const services: Service[] = [
         height: 764,
       },
     ],
-    relatedProject: "patient-app",
+    relatedProject: "taxi-app",
   },
   // Client copy
   {
@@ -119,9 +119,25 @@ export const services: Service[] = [
       "We provide high-quality IT hardware from leading global brands, delivering reliable technology solutions for businesses of all sizes.",
     tags: ["Enterprise IT Hardware", "Genuine Technology Products", "Business IT Infrastructure"],
     description:
-      "We provide high-quality IT hardware from leading global brands, delivering reliable technology solutions for businesses of all sizes.",
-    deliverables: ["Enterprise IT hardware", "Genuine technology products", "Business IT infrastructure"],
-    // To add: brands / product categories carried (shown as "Tools & stack"), and a related project.
-    tools: [],
+      "We provide reliable IT hardware sales, delivering high-quality technology products and equipment to power businesses with performance, reliability, and efficiency.",
+    deliverables: ["Servers & Storage Solutions", "Networking Equipment", "Computers & Workstations", "IT Hardware & Accessories"],
+    tools: ["Dell Technologies", "HP Enterprise (HPE)", "Cisco Systems", "Lenovo", "Fortinet", "Microsoft Azure"],
+    images: [
+      {
+        src: "/images/services/it-hardware-1.webp",
+        srcSmall: "/images/services/it-hardware-1-800.webp",
+        alt: "Enterprise IT hardware: servers, networking equipment and workstations",
+        width: 1400,
+        height: 788,
+      },
+      {
+        src: "/images/services/it-hardware-2.webp",
+        srcSmall: "/images/services/it-hardware-2-800.webp",
+        alt: "IT hardware and accessories for business infrastructure",
+        width: 1024,
+        height: 1024,
+      },
+    ],
+    relatedProject: "explainer-film",
   },
 ];

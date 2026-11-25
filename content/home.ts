@@ -37,7 +37,7 @@ export const home = {
     eyebrow: "Global presence",
     big: "Global",
     title: "Three offices, one schedule.",
-    body: "Karachi, London and New York cover most of the working day between them, so someone on the team is usually awake when you need an answer.",
+    body: "Karachi, Scotland and Texas cover most of the working day between them, so someone on the team is usually awake when you need an answer.",
   },
   closing: {
     eyebrow: "Start a project",

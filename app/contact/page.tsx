@@ -7,7 +7,7 @@ import { contact } from "@/content/contact";
 
 export const metadata: Metadata = {
   title: "Contact",
-  description: "Start a project with Techventics. Write to Info@techventics.com or visit us in Karachi, London or New York.",
+  description: "Start a project with Techventics. Write to Info@techventics.com or visit us in Karachi, Scotland or Texas.",
   alternates: { canonical: "/contact" },
 };
 
