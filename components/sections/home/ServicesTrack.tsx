@@ -65,8 +65,8 @@ export function ServicesTrack() {
           {services.map((s) => (
             <article
               key={s.id}
-              className={`group relative flex flex-col justify-between border border-steel bg-graphite p-7 transition-colors duration-400 hover:border-ember/60 md:p-9 ${
-                horizontal ? "h-[min(68vh,40rem)] w-[min(30rem,38vw)]" : "min-h-[26rem]"
+              className={`group relative flex flex-col border border-steel bg-graphite p-7 transition-colors duration-400 hover:border-ember/60 md:p-9 ${
+                horizontal ? "w-[min(28rem,36vw)] shrink-0" : ""
               }`}
             >
               <div className="flex items-start justify-between">
@@ -75,12 +75,12 @@ export function ServicesTrack() {
               </div>
 
               {s.images?.[0] && (
-                <div className={`relative mt-6 overflow-hidden border border-steel ${horizontal ? "min-h-0 flex-1" : "aspect-[16/9]"}`}>
+                <div className="relative mt-6 aspect-[16/10] w-full [@media(max-height:52rem)]:aspect-[21/9] shrink-0 overflow-hidden border border-steel">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img
                     src={s.images[0].src}
                     srcSet={`${s.images[0].srcSmall} 800w, ${s.images[0].src} ${s.images[0].width}w`}
-                    sizes="(min-width: 62rem) 30rem, 100vw"
+                    sizes="(min-width: 62rem) 28rem, (min-width: 48rem) 50vw, 100vw"
                     alt={s.images[0].alt}
                     width={s.images[0].width}
                     height={s.images[0].height}
@@ -91,10 +91,10 @@ export function ServicesTrack() {
                 </div>
               )}
 
-              <div className={s.images?.[0] ? "mt-6" : "mt-16"}>
+              <div className={`flex flex-1 flex-col ${s.images?.[0] ? "mt-6" : "mt-16"}`}>
                 <h3 className="text-h3 text-bone">{s.title}</h3>
                 <p className="mt-4 max-w-[34ch] text-small text-ash">{s.summary}</p>
-                <ul className="mt-8 flex flex-wrap gap-2" aria-label={`${s.title} deliverables`}>
+                <ul className="mt-8 flex flex-wrap gap-2 [@media(max-height:52rem)]:mt-6" aria-label={`${s.title} deliverables`}>
                   {s.tags.map((tag) => (
                     <li key={tag} className="label border border-steel px-3 py-1.5 text-bone/80">
                       {tag}
@@ -103,7 +103,7 @@ export function ServicesTrack() {
                 </ul>
                 <Link
                   href={`/services#${s.id}`}
-                  className="label mt-10 inline-flex items-center gap-3 text-bone transition-colors duration-400 hover:text-ember"
+                  className="label mt-auto inline-flex items-center gap-3 self-start pt-10 [@media(max-height:52rem)]:pt-7 text-bone transition-colors duration-400 hover:text-ember"
                 >
                   <span className="border-b border-bone/40 pb-1 transition-colors duration-400 group-hover:border-ember">
                     Explore<span className="sr-only"> {s.title}</span>

@@ -23,7 +23,4 @@ export const contact = {
     },
     note: "Offices in the USA, UK and Pakistan.",
   },
-  map: {
-    query: "Shayan Iconic Towers, Shaheed e Millat Road, Karachi",
-  },
 };

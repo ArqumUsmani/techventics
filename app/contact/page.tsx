@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { PageHero } from "@/components/layout/PageHero";
 import { ContactDetails } from "@/components/sections/contact/ContactDetails";
 import { ContactForm } from "@/components/sections/contact/ContactForm";
-import { OfficeMap } from "@/components/sections/contact/OfficeMap";
 import { contact } from "@/content/contact";
 
 export const metadata: Metadata = {
@@ -28,12 +27,6 @@ export default function ContactPage() {
               <ContactDetails />
             </div>
           </div>
-        </div>
-      </section>
-
-      <section aria-label="Map" className="bg-ink pb-24 md:pb-32">
-        <div className="container-x">
-          <OfficeMap />
         </div>
       </section>
     </>
