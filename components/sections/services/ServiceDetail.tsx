@@ -1,12 +1,17 @@
 import { SplitReveal } from "@/components/motion/SplitReveal";
+import { Slider } from "@/components/ui/Slider";
 import { WorkCard } from "@/components/ui/WorkCard";
 import { projects } from "@/content/projects";
 import type { Service } from "@/content/types";
 
 /** One service on the Services page: what we do, deliverables, tools and a related case. */
 export function ServiceDetail({ service }: { service: Service }) {
-  const projectIndex = service.relatedProject ? projects.findIndex((p) => p.id === service.relatedProject) : -1;
-  const project = projects[projectIndex];
+  // Related work: the linked case first, then every other project tagged with this service.
+  // New projects in projects.ts join the slider automatically.
+  const related = projects
+    .map((project, index) => ({ project, index }))
+    .filter(({ project }) => project.id === service.relatedProject || project.services.includes(service.id))
+    .sort((a, b) => Number(b.project.id === service.relatedProject) - Number(a.project.id === service.relatedProject));
 
   return (
     <section id={service.id} aria-labelledby={`${service.id}-title`} className="scroll-mt-24 border-t border-steel py-16 first:border-t-0 first:pt-0 md:py-24">
@@ -70,10 +75,14 @@ export function ServiceDetail({ service }: { service: Service }) {
         )}
       </div>
 
-      {project && (
+      {related.length > 0 && (
         <div className="mt-14">
           <h3 className="label text-ash">Related work</h3>
-          <WorkCard project={project} index={projectIndex} aspect="aspect-[16/9]" className="mt-4" sizes="(min-width: 1024px) 58vw, 100vw" />
+          <Slider label={`${service.title}: related work`} className="mt-4">
+            {related.map(({ project, index }) => (
+              <WorkCard key={project.id} project={project} index={index} aspect="aspect-[16/9]" sizes="(min-width: 1024px) 58vw, 90vw" />
+            ))}
+          </Slider>
         </div>
       )}
     </section>

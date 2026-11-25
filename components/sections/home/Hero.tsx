@@ -1,6 +1,7 @@
 "use client";
 
 import { useRef, type ReactNode } from "react";
+import { HeroSparks } from "@/components/motion/HeroSparks";
 import { useGpuTier } from "@/components/three/useGpuTier";
 import { HERO_FOCUS_Y, VMarkStage } from "@/components/three/VMarkStage";
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
@@ -65,7 +66,7 @@ export function Hero({ children }: { children: ReactNode }) {
     <div ref={scope} className="relative">
       {/* 3D layer. Live: sticky behind hero + next section. Static: just behind the hero. */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
-        <div className={live ? "sticky top-0 h-[100lvh]" : "h-[100svh]"}>
+        <div className={live ? "sticky top-0 h-[100lvh]" : "relative h-[100svh]"}>
           <VMarkStage
             className="h-full w-full"
             tier={tier ?? "static"}
@@ -73,6 +74,8 @@ export function Hero({ children }: { children: ReactNode }) {
             progressRef={progressRef}
             priority
           />
+          {/* Electrical sparks, embers and ember lighting over the mark */}
+          <HeroSparks progressRef={progressRef} className="absolute inset-0 h-full w-full" />
         </div>
       </div>
 
