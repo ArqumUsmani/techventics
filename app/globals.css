@@ -162,6 +162,23 @@
   }
 }
 
+/* Line reveals (SplitReveal): hidden until split; shown anyway after 3s if JS stalls */
+.js [data-split]:not([data-split-ready]) {
+  opacity: 0;
+  animation: split-fallback 0s linear 3s forwards;
+}
+@keyframes split-fallback {
+  to {
+    opacity: 1;
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .js [data-split]:not([data-split-ready]) {
+    opacity: 1;
+    animation: none;
+  }
+}
+
 /* Mono label / eyebrow / tag text */
 @utility label {
   font-family: var(--font-mono);

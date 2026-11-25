@@ -19,3 +19,21 @@ function subscribe(callback: () => void) {
 export function useReducedMotion(): boolean {
   return useSyncExternalStore(subscribe, prefersReducedMotion, () => false);
 }
+
+/** Live media query match. Server render returns `serverValue`. */
+export function useMediaQuery(query: string, serverValue = false): boolean {
+  return useSyncExternalStore(
+    (cb) => {
+      const mq = window.matchMedia(query);
+      mq.addEventListener("change", cb);
+      return () => mq.removeEventListener("change", cb);
+    },
+    () => window.matchMedia(query).matches,
+    () => serverValue,
+  );
+}
+
+/** True on devices with a fine pointer that can hover (mouse / trackpad). */
+export function useFinePointer(): boolean {
+  return useMediaQuery("(hover: hover) and (pointer: fine)");
+}
