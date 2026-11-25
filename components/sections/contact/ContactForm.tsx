@@ -14,7 +14,7 @@ const EMPTY: Values = { name: "", email: "", company: "", service: "", budget: "
 const MAX_MESSAGE = 5000;
 
 const inputClass =
-  "w-full border-b border-steel bg-transparent py-3 text-body text-bone outline-none transition-[border-color,box-shadow] duration-300 placeholder:text-ash/70 focus:border-ember focus:shadow-[0_1px_0_0_#FC5400] focus-visible:outline-none aria-[invalid=true]:border-ember";
+  "w-full border-b border-steel bg-transparent py-3 text-body text-bone outline-none transition-[border-color,box-shadow] duration-300 placeholder:text-ash focus:border-ember focus:shadow-[0_1px_0_0_#FC5400] focus-visible:outline-none aria-[invalid=true]:border-ember";
 
 function validate(values: Values) {
   const result = contactSchema.safeParse({ ...values, website: "", startedAt: 0 });
@@ -206,7 +206,7 @@ function Field({
       <div className="flex items-baseline justify-between gap-4">
         <label htmlFor={id} className="label text-ash">
           {label}
-          {optional && <span className="ml-2 normal-case tracking-normal text-ash/80">(optional)</span>}
+          {optional && <span className="ml-2 normal-case tracking-normal text-ash">(optional)</span>}
         </label>
         {aside}
       </div>
@@ -243,7 +243,7 @@ function Select({
         value={value}
         onChange={onChange}
         onBlur={onBlur}
-        className={`${inputClass} cursor-pointer appearance-none bg-ink pr-8 ${value ? "" : "text-ash/70"}`}
+        className={`${inputClass} cursor-pointer appearance-none bg-ink pr-8 ${value ? "" : "text-ash"}`}
         {...a11y(id, error)}
       >
         <option value="" disabled>

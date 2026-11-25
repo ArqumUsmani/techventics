@@ -18,7 +18,6 @@ export const satoshi = localFont({
   src: [
     { path: "../public/fonts/Satoshi-Regular.woff2", weight: "400", style: "normal" },
     { path: "../public/fonts/Satoshi-Medium.woff2", weight: "500", style: "normal" },
-    { path: "../public/fonts/Satoshi-Bold.woff2", weight: "700", style: "normal" },
   ],
   variable: "--font-satoshi",
   display: "swap",
@@ -33,6 +32,8 @@ export const jetbrains = localFont({
   ],
   variable: "--font-jetbrains",
   display: "swap",
+  // Labels only: load right after first paint instead of competing with it.
+  preload: false,
   fallback: ["ui-monospace", "Consolas", "monospace"],
   adjustFontFallback: false,
 });

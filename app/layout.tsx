@@ -6,6 +6,7 @@ import { SkipLink } from "@/components/layout/SkipLink";
 import { Cursor } from "@/components/motion/Cursor";
 import { PageTransition } from "@/components/motion/PageTransition";
 import { SmoothScroll } from "@/components/providers/SmoothScroll";
+import { offices } from "@/content/offices";
 import { site } from "@/content/site";
 import { clash, jetbrains, satoshi } from "./fonts";
 import "./globals.css";
@@ -18,6 +19,7 @@ export const metadata: Metadata = {
   },
   description: site.description,
   applicationName: site.name,
+  alternates: { canonical: "/" },
   openGraph: {
     type: "website",
     siteName: site.name,
@@ -31,12 +33,30 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
+// Organization structured data (schema.org) for search engines.
+const hq = offices.find((o) => o.isHeadquarters);
+const organizationLd = {
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: site.name,
+  url: site.url,
+  email: site.email,
+  description: site.description,
+  logo: new URL("/apple-icon", site.url).toString(),
+  address: hq?.address
+    ? { "@type": "PostalAddress", streetAddress: hq.address.slice(0, -1).join(", "), addressLocality: hq.city, addressCountry: "PK" }
+    : undefined,
+  location: offices.map((o) => ({ "@type": "Place", name: `${site.name} ${o.city}`, address: { "@type": "PostalAddress", addressLocality: o.city, addressCountry: o.country } })),
+  sameAs: site.socials.map((s) => s.href).filter(Boolean),
+};
+
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${clash.variable} ${satoshi.variable} ${jetbrains.variable}`} suppressHydrationWarning>
       <head>
         {/* Marks JS as available before first paint, so reveal start states never flash. */}
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+        <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd).replace(/</g, "\\u003c") }} />
       </head>
       <body>
         <SkipLink />

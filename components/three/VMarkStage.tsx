@@ -52,16 +52,41 @@ export function VMarkStage({
   const [inView, setInView] = useState(true);
 
   // Mount the canvas when the main thread is idle, so it never competes with first paint.
+  // Low tier (phones, modest laptops): wait for the first interaction or 4s, so the
+  // three.js download and parse never lands inside the initial load.
   useEffect(() => {
     if (!live) return;
-    const w = window as Window & { requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number };
-    if (w.requestIdleCallback) {
-      const id = w.requestIdleCallback(() => setMounted(true), { timeout: 1200 });
-      return () => window.cancelIdleCallback?.(id);
+    const w = window as Window & {
+      requestIdleCallback?: (cb: () => void, o?: { timeout: number }) => number;
+      cancelIdleCallback?: (id: number) => void;
+    };
+    let idleId: number | undefined;
+    let timer: number | undefined;
+    let done = false;
+    const mount = () => {
+      if (done) return;
+      done = true;
+      cleanupTriggers();
+      if (w.requestIdleCallback) idleId = w.requestIdleCallback(() => setMounted(true), { timeout: 1200 });
+      else timer = window.setTimeout(() => setMounted(true), 300);
+    };
+    const events = ["pointerdown", "touchstart", "keydown", "wheel", "scroll"] as const;
+    const cleanupTriggers = () => events.forEach((e) => window.removeEventListener(e, mount));
+
+    let delay: number | undefined;
+    if (tier === "low") {
+      events.forEach((e) => window.addEventListener(e, mount, { once: true, passive: true }));
+      delay = window.setTimeout(mount, 4000);
+    } else {
+      mount();
     }
-    const id = window.setTimeout(() => setMounted(true), 300);
-    return () => window.clearTimeout(id);
-  }, [live]);
+    return () => {
+      cleanupTriggers();
+      window.clearTimeout(delay);
+      window.clearTimeout(timer);
+      if (idleId !== undefined) w.cancelIdleCallback?.(idleId);
+    };
+  }, [live, tier]);
 
   // Pause rendering while off screen.
   useEffect(() => {

@@ -1,4 +1,5 @@
 import Link from "next/link";
+import SplitText from "@/components/reactbits/SplitText";
 import { offices } from "@/content/offices";
 import { site } from "@/content/site";
 import { Logo } from "./Logo";
@@ -85,6 +86,27 @@ export function Footer() {
             ),
           )}
         </ul>
+      </div>
+
+      {/* Giant wordmark (React Bits SplitText): letters rise from a mask as the footer
+          scrolls in; the bottom of the letters is clipped by the page edge. TECH in
+          faint bone, VENTICS in muted ember (orange stays a low-opacity accent). */}
+      <div aria-hidden className="container-x pointer-events-none select-none overflow-hidden">
+        <SplitText
+          text="TECHVENTICS"
+          tag="span"
+          splitType="chars"
+          effect="rise"
+          mask
+          delay={45}
+          duration={1.1}
+          staggerFrom="start"
+          textAlign="center"
+          // It sits at the very bottom of the page, so start as soon as it enters the viewport.
+          threshold={0}
+          rootMargin="0px"
+          className="-mb-[0.17em] w-full whitespace-nowrap font-display text-[min(calc(13.1vw-0.3rem),9.7rem)] font-bold uppercase leading-[0.82] tracking-[-0.035em] text-bone/[0.13] [&_:is(.split-char,.split-char-mask):nth-child(n+5)]:text-ember/45"
+        />
       </div>
     </footer>
   );

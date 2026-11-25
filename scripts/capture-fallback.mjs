@@ -19,8 +19,8 @@ import sharp from "sharp";
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
 const TARGETS = {
-  vmark: { path: "/lab/vmark?capture=1&tier=high", flag: "vmarkLive", out: "vmark-fallback.webp", width: 1920, height: 1200 },
-  globe: { path: "/lab/globe?capture=1", flag: "globeLive", out: "globe-fallback.webp", width: 1000, height: 1000 },
+  vmark: { path: "/capture/vmark?capture=1&tier=high", flag: "vmarkLive", out: "vmark-fallback.webp", width: 1920, height: 1200 },
+  globe: { path: "/capture/globe?capture=1", flag: "globeLive", out: "globe-fallback.webp", width: 1000, height: 1000 },
 };
 const name = process.argv[2] ?? "vmark";
 const target = TARGETS[name];
