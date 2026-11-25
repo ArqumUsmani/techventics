@@ -1,4 +1,5 @@
 import Image from "next/image";
+import { facets, pointsAttr, toneHex, traces, VIEWBOX } from "@/components/three/vmarkShape";
 import { site } from "@/content/site";
 
 type LogoProps = {
@@ -45,21 +46,23 @@ export function Logo({ compact = false, className = "" }: LogoProps) {
   );
 }
 
-/** Placeholder V mark: faceted arms with a circuit trace and node dots. */
+/** Placeholder V mark (2D), drawn from the same shape data as the 3D model. */
 export function VMark({ className = "" }: { className?: string }) {
+  const { x, y, width, height } = VIEWBOX;
   return (
-    <svg viewBox="0 0 64 58" className={className} aria-hidden focusable="false">
-      {/* left arm (the "black" side, drawn in bone so it reads on ink) */}
-      <polygon points="0,0 18,0 32,28" fill="#F6F1EA" />
-      <polygon points="0,0 32,28 32,58" fill="#F6F1EA" opacity="0.72" />
-      {/* right arm: ember facets */}
-      <polygon points="46,0 64,0 32,28" fill="#FF7A1F" />
-      <polygon points="64,0 32,58 32,28" fill="#E04808" />
-      <polygon points="64,0 48,29 32,28" fill="#FC5400" />
-      {/* circuit trace + nodes */}
-      <polyline points="44,38 54,38 58,34" fill="none" stroke="#FC5400" strokeWidth="1.6" />
-      <circle cx="59.5" cy="32.5" r="2.2" fill="#FC5400" />
-      <circle cx="11" cy="9" r="1.8" fill="#0B0B0B" />
+    <svg viewBox={`${x} ${y} ${width} ${height}`} className={className} aria-hidden focusable="false">
+      {facets.map((f) => (
+        <polygon key={f.id} points={pointsAttr(f.points)} fill={toneHex[f.tone]} opacity={f.shade ?? 1} />
+      ))}
+      {traces.map((t) => {
+        const [nx, ny] = t.points[t.points.length - 1];
+        return (
+          <g key={t.id}>
+            <polyline points={pointsAttr(t.points)} fill="none" stroke="#FC5400" strokeWidth="1.6" />
+            <circle cx={nx} cy={ny} r="2.4" fill="#FC5400" />
+          </g>
+        );
+      })}
     </svg>
   );
 }
