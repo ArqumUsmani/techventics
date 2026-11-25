@@ -1,5 +1,4 @@
 import { SplitReveal } from "@/components/motion/SplitReveal";
-import { ButtonLink, TextLink } from "@/components/ui/Button";
 import { Eyebrow } from "@/components/ui/Eyebrow";
 import { home } from "@/content/home";
 
@@ -8,12 +7,13 @@ import { home } from "@/content/home";
  * hero doesn't have. Transparent so the 3D layer behind it shows through.
  */
 export function Intro() {
-  const { eyebrow, headline, accent, subline, primaryCta, secondaryCta } = home.intro;
+  const { eyebrow, headline, accent, subline } = home.intro;
   return (
     <section id="intro" className="relative flex min-h-[100svh] items-center py-32">
       <div className="container-x">
         <Eyebrow index="01">{eyebrow}</Eyebrow>
-        <SplitReveal className="mt-8 font-display text-h1 font-bold uppercase text-bone" start="top 80%">
+        {/* Sized so the longest word ("EMPOWERING") fits a 360px-wide phone. */}
+        <SplitReveal className="mt-8 font-display text-[clamp(2.25rem,1.1rem+6.6vw,8.5rem)] font-bold uppercase leading-[0.92] tracking-[-0.02em] text-bone" start="top 80%">
           {headline.map((line, i) => (
             <span key={line} className="block">
               {line.includes(accent) ? (
@@ -28,13 +28,7 @@ export function Intro() {
             </span>
           ))}
         </SplitReveal>
-        <div className="mt-10 flex flex-col gap-8 md:flex-row md:items-end md:justify-between">
-          <p className="measure text-lead text-ash">{subline}</p>
-          <div className="flex shrink-0 items-center gap-8">
-            <ButtonLink href={primaryCta.href}>{primaryCta.label}</ButtonLink>
-            <TextLink href={secondaryCta.href}>{secondaryCta.label}</TextLink>
-          </div>
-        </div>
+        <p className="measure mt-10 text-lead text-ash">{subline}</p>
       </div>
     </section>
   );

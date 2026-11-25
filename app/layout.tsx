@@ -14,10 +14,10 @@ import "./globals.css";
 export const metadata: Metadata = {
   metadataBase: new URL(site.url),
   title: {
-    default: `${site.name} | Web, mobile, brand and motion studio`,
+    default: `${site.name} | ${site.tagline}`,
     template: `%s | ${site.name}`,
   },
-  description: site.description,
+  description: site.seoDescription,
   applicationName: site.name,
   alternates: { canonical: "/" },
   openGraph: {

@@ -31,6 +31,8 @@ export type SiteConfig = {
   /** One-line description used in the footer and default metadata. */
   tagline: string;
   description: string;
+  /** Short description for search results and share cards (~160 characters). */
+  seoDescription: string;
   url: string;
   email: string;
   logo: {

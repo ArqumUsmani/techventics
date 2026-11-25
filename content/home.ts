@@ -3,17 +3,17 @@
 export const home = {
   intro: {
     eyebrow: "Techventics",
-    headline: ["We engineer", "what’s next."],
+    // Client tagline
+    headline: ["Innovating Today.", "Empowering Tomorrow."],
     /** Word in the headline shown in ember. */
-    accent: "next.",
-    subline: "Web, mobile, brand and motion, from Karachi, London and New York.",
-    primaryCta: { label: "Start a project", href: "/contact" },
-    secondaryCta: { label: "See our work", href: "#work" },
+    accent: "Tomorrow.",
+    // Client description
+    subline: "At Techventics, we combine cutting-edge IT hardware, advanced technology, and innovative digital solutions to empower businesses for the future. From enterprise-grade IT infrastructure and hardware distribution to intelligent technology solutions, we deliver the products and expertise businesses need to operate smarter, perform better, and stay ahead in an evolving digital world.",
   },
   manifesto: {
-    eyebrow: "Manifesto",
-    // Words wrapped in *asterisks* light up in ember instead of bone.
-    text: "We design and build digital products that move businesses *forward,* from the first sketch to launch day and every release after it.",
+    eyebrow: "Our vision",
+    // Client vision statement. Words wrapped in *asterisks* light up in ember instead of bone.
+    text: "To bridge the gap between today's technology needs and *tomorrow's* *possibilities* through innovation, reliable IT hardware, and intelligent solutions.",
   },
   services: {
     eyebrow: "What we do",
