@@ -22,7 +22,8 @@ export function ServiceDetail({ service }: { service: Service }) {
       <p className="measure mt-6 text-lead text-ash">{service.description}</p>
 
       {service.images && service.images.length > 0 && (
-        <div className="mt-12 grid gap-4 md:grid-cols-12">
+        // Hidden on phones (and portrait tablets): shown from laptop width, or on a landscape tablet.
+        <div className="mt-12 hidden gap-4 md:grid-cols-12 lg:grid [@media(min-width:48rem)_and_(min-height:37.5rem)_and_(orientation:landscape)]:grid">
           {service.images.map((img, i) => (
             <figure
               key={img.src}

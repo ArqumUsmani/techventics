@@ -30,7 +30,7 @@ export default function ServicesPage() {
         <aside className="hidden lg:col-span-4 lg:block">
           <ServiceIndex items={services.map(({ id, number, title }) => ({ id, number, title }))} />
         </aside>
-        <div className="lg:col-span-8">
+        <div className="min-w-0 lg:col-span-8">
           {services.map((s) => (
             <ServiceDetail key={s.id} service={s} />
           ))}

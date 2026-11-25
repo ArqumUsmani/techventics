@@ -49,7 +49,7 @@ export function Slider({ children, label, className = "" }: { children: ReactNod
     "grid size-11 place-items-center rounded-full border border-steel text-bone transition-colors duration-400 hover:border-ember hover:text-ember disabled:pointer-events-none disabled:opacity-30";
 
   return (
-    <div role="region" aria-roledescription="carousel" aria-label={label} className={className}>
+    <div role="region" aria-roledescription="carousel" aria-label={label} className={`min-w-0 ${className}`}>
       <div
         ref={track}
         onScroll={onScroll}
