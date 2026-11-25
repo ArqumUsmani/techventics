@@ -1,12 +1,13 @@
 #!/usr/bin/env node
 /**
- * Renders the live 3D V mark in headless Chrome and saves it as the static fallback
- * (public/images/vmark-fallback.webp), used for reduced motion, weak GPUs and first paint.
+ * Renders a live 3D scene in headless Chrome and saves it as its static fallback image,
+ * used for reduced motion, weak GPUs and first paint.
  *
  * Usage (with `npm run dev` running):
- *   npm run capture:vmark
- * Options (env): BASE_URL (default http://localhost:3000), CHROME_PATH, WIDTH, HEIGHT.
- * Re-run it whenever the mark changes (e.g. when the real logo SVG is dropped in).
+ *   npm run capture:vmark   → public/images/vmark-fallback.webp  (hero mark)
+ *   npm run capture:globe   → public/images/globe-fallback.webp  (Home globe)
+ * Options (env): BASE_URL (default http://localhost:3000), CHROME_PATH.
+ * Re-run after changing a scene (e.g. when the real logo SVG is dropped in).
  */
 import { spawn } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, rmSync } from "node:fs";
@@ -17,9 +18,16 @@ import sharp from "sharp";
 
 const root = join(dirname(fileURLToPath(import.meta.url)), "..");
 const BASE = process.env.BASE_URL ?? "http://localhost:3000";
-const WIDTH = Number(process.env.WIDTH ?? 1920);
-const HEIGHT = Number(process.env.HEIGHT ?? 1200);
-const OUT = join(root, "public", "images", "vmark-fallback.webp");
+const TARGETS = {
+  vmark: { path: "/lab/vmark?capture=1&tier=high", flag: "vmarkLive", out: "vmark-fallback.webp", width: 1920, height: 1200 },
+  globe: { path: "/lab/globe?capture=1", flag: "globeLive", out: "globe-fallback.webp", width: 1000, height: 1000 },
+};
+const name = process.argv[2] ?? "vmark";
+const target = TARGETS[name];
+if (!target) throw new Error(`Unknown target "${name}". Use one of: ${Object.keys(TARGETS).join(", ")}`);
+const WIDTH = target.width;
+const HEIGHT = target.height;
+const OUT = join(root, "public", "images", target.out);
 const PORT = 9400 + Math.floor(Math.random() * 400);
 
 const candidates = [
@@ -34,7 +42,7 @@ const chrome = candidates.find((p) => existsSync(p));
 if (!chrome) throw new Error("Chrome not found. Set CHROME_PATH.");
 
 const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-const profile = mkdtempSync(join(tmpdir(), "vmark-capture-"));
+const profile = mkdtempSync(join(tmpdir(), "scene-capture-"));
 const proc = spawn(
   chrome,
   [
@@ -52,16 +60,16 @@ const proc = spawn(
 );
 
 async function main() {
-  let target;
-  for (let i = 0; i < 60 && !target; i++) {
+  let page;
+  for (let i = 0; i < 60 && !page; i++) {
     try {
-      target = (await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json()).find((t) => t.type === "page");
+      page = (await (await fetch(`http://127.0.0.1:${PORT}/json/list`)).json()).find((t) => t.type === "page");
     } catch {}
-    if (!target) await sleep(250);
+    if (!page) await sleep(250);
   }
-  if (!target) throw new Error("Could not connect to headless Chrome");
+  if (!page) throw new Error("Could not connect to headless Chrome");
 
-  const ws = new WebSocket(target.webSocketDebuggerUrl);
+  const ws = new WebSocket(page.webSocketDebuggerUrl);
   await new Promise((r) => ws.addEventListener("open", r, { once: true }));
   let id = 0;
   const pending = new Map();
@@ -79,17 +87,17 @@ async function main() {
     (await send("Runtime.evaluate", { expression, returnByValue: true })).result?.result?.value;
 
   await send("Emulation.setDeviceMetricsOverride", { width: WIDTH, height: HEIGHT, deviceScaleFactor: 1, mobile: false });
-  await send("Page.navigate", { url: `${BASE}/lab/vmark?capture=1&tier=high` });
+  await send("Page.navigate", { url: `${BASE}${target.path}` });
 
   // Wait for the first live frame, then let the scene settle.
   const started = Date.now();
-  while ((await evaluate("document.documentElement.dataset.vmarkLive")) !== "true") {
+  while ((await evaluate(`document.documentElement.dataset.${target.flag}`)) !== "true") {
     if (Date.now() - started > 90_000) throw new Error("Scene never went live (is the dev server running?)");
     await sleep(500);
   }
   await sleep(4000);
 
-  // Hide the header so only the mark is captured.
+  // Hide the header and dev overlay so only the scene is captured.
   await evaluate(
     "document.querySelector('header')?.style.setProperty('visibility','hidden'); document.querySelectorAll('nextjs-portal').forEach((n) => n.remove())",
   );

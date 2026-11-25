@@ -162,6 +162,16 @@
   }
 }
 
+/* Custom cursor (fine pointers only, set by <Cursor/>): hide the native one,
+   except over text fields where the I-beam matters. */
+html.has-cursor,
+html.has-cursor * {
+  cursor: none !important;
+}
+html.has-cursor :is(input, textarea, select, [contenteditable="true"]) {
+  cursor: auto !important;
+}
+
 /* Line reveals (SplitReveal): hidden until split; shown anyway after 3s if JS stalls */
 .js [data-split]:not([data-split-ready]) {
   opacity: 0;

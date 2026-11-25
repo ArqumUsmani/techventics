@@ -1,8 +1,9 @@
+import { GlobeStage } from "@/components/three/GlobeStage";
 import { SectionHeader } from "@/components/ui/SectionHeader";
 import { home } from "@/content/home";
 import { offices } from "@/content/offices";
 
-/** Offices list + globe. The 3D dotted globe with arcs is added in step 6 (slot below). */
+/** Offices list + dotted 3D globe with office pins and arcs from the HQ. */
 export function GlobalPresence() {
   return (
     <section id="presence" aria-labelledby="presence-title" className="relative overflow-x-clip bg-ink py-24 md:py-32">
@@ -24,11 +25,9 @@ export function GlobalPresence() {
           </ul>
         </div>
 
-        {/* STEP 6 SLOT: dotted 3D globe with pins and arcs Karachi → London / New York */}
+        {/* Dotted 3D globe: pins on each office, arcs from the HQ to London and New York */}
         <div className="lg:col-span-6 lg:self-center">
-          <div className="relative mx-auto flex aspect-square w-full max-w-[34rem] items-center justify-center rounded-full border border-dashed border-steel">
-            <span className="label text-ash">Globe · step 6</span>
-          </div>
+          <GlobeStage offices={offices} hubId={offices.find((o) => o.isHeadquarters)?.id ?? offices[0].id} className="mx-auto w-full max-w-[34rem]" />
         </div>
       </div>
     </section>

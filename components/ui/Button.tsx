@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Magnetic } from "@/components/motion/Magnetic";
 import type { ComponentProps, ReactNode } from "react";
 
 type Variant = "primary" | "outline";
@@ -15,21 +16,25 @@ const variants: Record<Variant, string> = {
 type ButtonLinkProps = Omit<ComponentProps<typeof Link>, "className"> & {
   variant?: Variant;
   className?: string;
+  /** Pull toward the pointer within ~80px (default on). */
+  magnetic?: boolean;
   children: ReactNode;
 };
 
-export function ButtonLink({ variant = "primary", className = "", children, ...props }: ButtonLinkProps) {
-  return (
+export function ButtonLink({ variant = "primary", className = "", magnetic = true, children, ...props }: ButtonLinkProps) {
+  const link = (
     <Link className={`${base} ${variants[variant]} ${className}`} {...props}>
       {children}
     </Link>
   );
+  return magnetic ? <Magnetic>{link}</Magnetic> : link;
 }
 
-type ButtonProps = ComponentProps<"button"> & { variant?: Variant };
+type ButtonProps = ComponentProps<"button"> & { variant?: Variant; magnetic?: boolean };
 
-export function Button({ variant = "primary", className = "", type = "button", ...props }: ButtonProps) {
-  return <button type={type} className={`${base} ${variants[variant]} ${className}`} {...props} />;
+export function Button({ variant = "primary", className = "", type = "button", magnetic = true, ...props }: ButtonProps) {
+  const button = <button type={type} className={`${base} ${variants[variant]} ${className}`} {...props} />;
+  return magnetic ? <Magnetic>{button}</Magnetic> : button;
 }
 
 /** Plain text link with an arrow, e.g. "See our work". */

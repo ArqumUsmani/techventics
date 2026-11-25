@@ -8,7 +8,8 @@
     "start": "next start",
     "lint": "next lint",
     "typecheck": "tsc --noEmit",
-    "capture:vmark": "node scripts/capture-vmark-fallback.mjs"
+    "capture:vmark": "node scripts/capture-fallback.mjs vmark",
+    "capture:globe": "node scripts/capture-fallback.mjs globe"
   },
   "dependencies": {
     "@gsap/react": "^2.1.2",
