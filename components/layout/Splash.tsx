@@ -1,8 +1,10 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { LOGO_FILES } from "@/components/brand/logoFiles";
 import { prefersReducedMotion } from "@/lib/motion";
-import { SPLASH_DONE, blinkPattern, flickerElement, patternLength, sampleTube, strikePattern } from "@/lib/tube";
+import { SPLASH_DONE, blinkPattern, flickerElement, sampleTube, strikePattern } from "@/lib/tube";
+import { createDotMark, type DotMark } from "./splashMark";
 
 const SEEN_KEY = "tv-splash";
 const MIN_SECONDS = 2.1;
@@ -13,16 +15,15 @@ const WORD = [
 ];
 
 /**
- * Start-up screen, once per browser session: the mark strikes on like a fluorescent
- * tube, the wordmark letters catch one by one, and a line counts up while the page
- * loads. It then lifts away and fires SPLASH_DONE, which starts the hero logo's own
- * flicker. Skipped before first paint on later page loads (see the inline script in
- * the layout); hidden entirely without JavaScript.
+ * Start-up screen, once per browser session. The hero's dotted mark strikes on like a
+ * fluorescent tube (white and ember strokes as two separate tubes), the wordmark
+ * letters catch one by one, and a line counts up while the page loads. It then lifts
+ * away and fires SPLASH_DONE, which starts the hero logo's own strike. Skipped before
+ * first paint on later page loads (inline script in the layout); hidden without JS.
  */
 export function Splash() {
   const root = useRef<HTMLDivElement>(null);
-  const mark = useRef<HTMLDivElement>(null);
-  const glow = useRef<HTMLDivElement>(null);
+  const canvas = useRef<HTMLCanvasElement>(null);
   const bar = useRef<HTMLDivElement>(null);
   const count = useRef<HTMLSpanElement>(null);
   const [gone, setGone] = useState(false);
@@ -49,15 +50,22 @@ export function Splash() {
     const onLoad = () => (loaded = true);
     window.addEventListener("load", onLoad, { once: true });
 
-    // Mark: a full strike; the glow behind it follows the same pattern.
-    const strike = strikePattern();
-    const strikeLen = patternLength(strike);
-    const letters = Array.from(root.current?.querySelectorAll<HTMLElement>("[data-splash-letter]") ?? []);
-    if (reduced) {
-      [mark.current, glow.current, ...letters].forEach((el) => el && (el.style.opacity = "1"));
-    } else {
-      letters.forEach((el, i) => flickerElement(el, i % 3 === 0 ? strikePattern().slice(5) : blinkPattern(), 0.45 + i * 0.07 + Math.random() * 0.12));
+    // The dotted mark: two tubes with their own strikes, the ember one a beat later.
+    let mark: DotMark | null = null;
+    if (canvas.current) {
+      createDotMark(canvas.current)
+        .then((m) => (mark = m))
+        .catch(() => {});
     }
+    const strikeWhite = strikePattern();
+    const strikeEmber = strikePattern();
+    const emberDelay = 0.12 + Math.random() * 0.15;
+    let markT0 = -1; // the strike starts once the dots are ready
+    const hum = { white: { p: null as ReturnType<typeof blinkPattern> | null, at: 0 }, ember: { p: null as ReturnType<typeof blinkPattern> | null, at: 0 }, next: 0 };
+
+    const letters = Array.from(root.current?.querySelectorAll<HTMLElement>("[data-splash-letter]") ?? []);
+    if (reduced) letters.forEach((el) => (el.style.opacity = "1"));
+    else letters.forEach((el, i) => flickerElement(el, i % 3 === 0 ? strikePattern().slice(5) : blinkPattern(), 0.45 + i * 0.07 + Math.random() * 0.12));
 
     const t0 = performance.now();
     let shown = 0;
@@ -65,22 +73,42 @@ export function Splash() {
     let raf = 0;
     const tick = (now: number) => {
       const t = (now - t0) / 1000;
-      if (!reduced && mark.current && glow.current) {
-        const level = t < strikeLen ? sampleTube(strike, t) : 0.92 + Math.sin(t * 9) * 0.03 + (Math.random() < 0.015 ? -0.5 : 0);
-        mark.current.style.opacity = String(Math.min(1, level));
-        glow.current.style.opacity = String(Math.min(1.2, level) * 0.85);
+
+      if (mark) {
+        if (markT0 < 0) {
+          markT0 = t;
+          hum.next = t + 2.2;
+        }
+        const mt = t - markT0;
+        let white = 1;
+        let ember = 1;
+        if (!reduced) {
+          white = sampleTube(strikeWhite, mt);
+          ember = sampleTube(strikeEmber, mt - emberDelay);
+          // After the strike: the odd stutter on one tube, like the hero on hover.
+          if (t > hum.next) {
+            if (Math.random() < 0.5) hum.white = { p: blinkPattern(), at: t };
+            else hum.ember = { p: blinkPattern(), at: t };
+            hum.next = t + 0.9 + Math.random() * 1.4;
+          }
+          if (hum.white.p) white = Math.min(white, sampleTube(hum.white.p, t - hum.white.at));
+          if (hum.ember.p) ember = Math.min(ember, sampleTube(hum.ember.p, t - hum.ember.at));
+        }
+        mark.draw(white, ember, t);
       }
+
       // Progress: eases toward 90% while loading, then to 100% once the page has loaded.
       const target = loaded ? 100 : Math.min(90, (t / 2.4) * 90);
       shown += (target - shown) * Math.min(1, 0.08 + (loaded ? 0.1 : 0));
       if (bar.current) bar.current.style.transform = `scaleX(${shown / 100})`;
       if (count.current) count.current.textContent = String(Math.round(shown)).padStart(3, "0");
 
-      const ready = (loaded && shown > 99.2 && t >= (reduced ? 0.4 : MIN_SECONDS)) || t >= MAX_SECONDS;
+      // Leave once loaded, and (unless reduced motion) only after the logo has fully struck on.
+      const struck = reduced || (markT0 >= 0 && t - markT0 >= 1.9);
+      const ready = (loaded && shown > 99.2 && t >= (reduced ? 0.4 : MIN_SECONDS) && struck) || t >= MAX_SECONDS;
       if (ready && !leaving) {
         leaving = true;
-        if (mark.current) mark.current.style.opacity = "1";
-        if (glow.current) glow.current.style.opacity = "1";
+        mark?.draw(1, 1, t);
         root.current?.setAttribute("data-leaving", "");
         window.setTimeout(finish, reduced ? 200 : 650);
         return;
@@ -103,34 +131,22 @@ export function Splash() {
       data-splash-screen
       role="status"
       aria-label="Loading Techventics"
-      className="group/splash fixed inset-0 z-[200] grid place-items-center bg-ink transition-[opacity,transform] duration-600 ease-out-expo data-leaving:pointer-events-none data-leaving:scale-[1.04] data-leaving:opacity-0"
+      className="fixed inset-0 z-[200] grid place-items-center bg-ink transition-[opacity,transform] duration-600 ease-out-expo data-leaving:pointer-events-none data-leaving:scale-[1.04] data-leaving:opacity-0"
     >
       <div className="flex flex-col items-center">
-        <div className="relative">
-          {/* Glow of the lit tube */}
-          <div
-            ref={glow}
-            aria-hidden
-            data-splash-dim
-            className="absolute left-1/2 top-1/2 size-[28rem] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(252,84,0,0.28),rgba(252,84,0,0)_62%)]"
-          />
-          <div ref={mark} data-splash-dim className="relative">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img
-              src="/brand/techventics-mark-on-dark.svg"
-              alt=""
-              width={160}
-              height={160}
-              className="h-28 w-auto drop-shadow-[0_0_10px_rgba(252,84,0,0.65)] md:h-36"
-            />
-          </div>
-        </div>
+        {/* The hero's dotted mark, drawn by splashMark.ts */}
+        <canvas
+          ref={canvas}
+          aria-hidden
+          className="w-[min(78vw,20rem)] md:w-[26rem]"
+          style={{ aspectRatio: `${LOGO_FILES.mark.width} / ${LOGO_FILES.mark.height}` }}
+        />
 
         <p aria-hidden className="mt-10 flex font-display text-[clamp(1.1rem,2.4vw,1.6rem)] font-medium tracking-[0.38em] [margin-right:-0.38em]">
           {WORD.map((part) => (
             <span key={part.text} className={`flex ${part.tone}`}>
               {part.text.split("").map((ch, i) => (
-                <span key={i} data-splash-letter data-splash-dim className="[text-shadow:0_0_12px_rgba(252,84,0,0.45)]">
+                <span key={i} data-splash-letter data-splash-dim>
                   {ch}
                 </span>
               ))}
@@ -140,7 +156,7 @@ export function Splash() {
 
         <div aria-hidden className="mt-12 w-48">
           <div className="h-px w-full bg-steel">
-            <div ref={bar} className="h-px origin-left scale-x-0 bg-ember shadow-[0_0_8px_rgba(252,84,0,0.8)]" />
+            <div ref={bar} className="h-px origin-left scale-x-0 bg-ember" />
           </div>
           <p className="label mt-3 flex justify-between text-ash">
             <span>Powering up</span>

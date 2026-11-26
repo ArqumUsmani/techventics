@@ -3,7 +3,7 @@
 import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
-import { LOGO_FILES } from "@/components/brand/logoFiles";
+import { LOGO_FILES, MARK_NODES } from "@/components/brand/logoFiles";
 import { blinkPattern, sampleTube, type TubePattern } from "@/lib/tube";
 
 /* ---------------------------------------------------------------
@@ -29,12 +29,8 @@ const toWorld = (u: number, v: number): [number, number] => [(u - 0.5) * MARK_W,
 /** Open space inside the V (logo space): the scroll fly-through passes through it. */
 export const NOTCH_CENTER = toWorld(0.5, 0.44);
 
-/** Circuit-node holes in the artwork (logo space; radius as a share of the mark width). */
-const NODES = [
-  { u: 0.15, v: 0.125, r: 0.022 },
-  { u: 0.542, v: 0.125, r: 0.022 },
-  { u: 0.834, v: 0.125, r: 0.026 },
-];
+/** Circuit-node holes in the artwork (shared with the splash). */
+const NODES = MARK_NODES;
 
 const HOLE_RADIUS = 0.3; // world units (~7% of the mark's width across)
 const TRAIL_SLOTS = 20;
