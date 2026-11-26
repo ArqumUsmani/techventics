@@ -36,6 +36,14 @@ const NODES = [
   { u: 0.834, v: 0.125, r: 0.026 },
 ];
 
+/** The mark's corners (world units, local to the group), for placing the DOM glow. */
+const GLOW_CORNERS: [number, number][] = [
+  [-MARK_W / 2, MARK_H / 2],
+  [MARK_W / 2, MARK_H / 2],
+  [-MARK_W / 2, -MARK_H / 2],
+  [MARK_W / 2, -MARK_H / 2],
+];
+
 const HOLE_RADIUS = 0.3; // world units (~7% of the mark's width across)
 const TRAIL_SLOTS = 20;
 const TRAIL_SPACING = 0.15;
@@ -189,11 +197,13 @@ type VMarkProps = {
   offsetY?: number;
   /** Called once the dots exist and have been drawn. */
   onReady?: () => void;
+  /** DOM glow over the mark: sized and placed over it each frame, brightness follows the tubes. */
+  glowRef?: RefObject<HTMLDivElement | null>;
 };
 
 type Slot = { x: number; y: number; born: number; scale: number };
 
-export function VMark({ quality, interactive = true, progressRef, offsetY = 0, onReady }: VMarkProps) {
+export function VMark({ quality, interactive = true, progressRef, offsetY = 0, onReady, glowRef }: VMarkProps) {
   const group = useRef<THREE.Group>(null);
   const pointer = useRef({ x: 0, y: 0, ndcX: 0, ndcY: 0, movedAt: -Infinity });
   const trail = useRef<Slot[]>(Array.from({ length: TRAIL_SLOTS }, () => ({ x: 0, y: 0, born: -100, scale: 1 })));
@@ -277,6 +287,7 @@ export function VMark({ quality, interactive = true, progressRef, offsetY = 0, o
       hit: new THREE.Vector3(),
       ndc: new THREE.Vector2(),
       lastMove: -Infinity,
+      corner: new THREE.Vector3(),
     }),
     [],
   );
@@ -340,8 +351,47 @@ export function VMark({ quality, interactive = true, progressRef, offsetY = 0, o
         if (pick >= 0.4) tb.b = { p: blinkPattern(), at: t + (pick >= 0.75 ? 0.06 : 0) };
         tb.nextAt = t + 1.8 + Math.random() * 2.5;
       }
-      dots.material.uniforms.uTubeA.value = tb.a.p ? sampleTube(tb.a.p, t - tb.a.at) : 1;
-      dots.material.uniforms.uTubeB.value = tb.b.p ? sampleTube(tb.b.p, t - tb.b.at) : 1;
+      const levelA = tb.a.p ? sampleTube(tb.a.p, t - tb.a.at) : 1;
+      const levelB = tb.b.p ? sampleTube(tb.b.p, t - tb.b.at) : 1;
+      dots.material.uniforms.uTubeA.value = levelA;
+      dots.material.uniforms.uTubeB.value = levelB;
+
+      // Tube glow: place the DOM halo over the mark's on-screen box, brightness from the tubes.
+      const glow = glowRef?.current;
+      if (glow) {
+        let minX = Infinity;
+        let minY = Infinity;
+        let maxX = -Infinity;
+        let maxY = -Infinity;
+        for (const [cx, cy] of GLOW_CORNERS) {
+          scratch.corner.set(cx, cy, 0).applyMatrix4(g.matrixWorld).project(camera);
+          const sx = ((scratch.corner.x + 1) / 2) * state.size.width;
+          const sy = ((1 - scratch.corner.y) / 2) * state.size.height;
+          minX = Math.min(minX, sx);
+          maxX = Math.max(maxX, sx);
+          minY = Math.min(minY, sy);
+          maxY = Math.max(maxY, sy);
+        }
+        // Size is set only when it drifts noticeably (resize, fly-through); per-frame changes use a
+        // scale transform, so the blurred layers are not re-rasterised every frame.
+        const w = maxX - minX;
+        const h = maxY - minY;
+        let baseW = Number(glow.dataset.w) || 0;
+        let baseH = Number(glow.dataset.h) || 0;
+        if (!baseW || Math.abs(w / baseW - 1) > 0.15 || Math.abs(h / baseH - 1) > 0.15) {
+          baseW = w;
+          baseH = h;
+          glow.dataset.w = String(w);
+          glow.dataset.h = String(h);
+          glow.style.width = `${w.toFixed(1)}px`;
+          glow.style.height = `${h.toFixed(1)}px`;
+        }
+        glow.style.transformOrigin = "0 0";
+        glow.style.transform = `translate3d(${minX.toFixed(1)}px, ${minY.toFixed(1)}px, 0) scale(${(w / baseW).toFixed(4)}, ${(h / baseH).toFixed(4)})`;
+        // A faint mains hum while lit, plus the hover blinks; gone during the fly-through.
+        const hum = 0.94 + Math.sin(t * 11) * 0.03 + Math.sin(t * 2.3) * 0.03;
+        glow.style.opacity = String(Math.max(0, (idle * 1.4 - 0.4)) * hum * Math.min(1.2, (levelA + levelB) / 2));
+      }
     }
 
     // Hole radius over its life: open fast, hold, then close smoothly.

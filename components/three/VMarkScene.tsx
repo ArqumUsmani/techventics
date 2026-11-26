@@ -21,6 +21,8 @@ export type VMarkSceneProps = {
   focusY?: number;
   /** Called after the first frame has been drawn. */
   onReady?: () => void;
+  /** DOM glow over the mark (tube-light halo), positioned by the mark each frame. */
+  glowRef?: RefObject<HTMLDivElement | null>;
 };
 
 const INK = "#0B0B0B";
@@ -89,7 +91,7 @@ function CameraRig({ progressRef, offsetY }: { progressRef?: RefObject<number>; 
   return null;
 }
 
-export default function VMarkScene({ quality, progressRef, interactive = true, paused = false, focusY = 0.5, onReady }: VMarkSceneProps) {
+export default function VMarkScene({ quality, progressRef, interactive = true, paused = false, focusY = 0.5, onReady, glowRef }: VMarkSceneProps) {
   const [degraded, setDegraded] = useState(false);
   const q: SceneQuality = degraded ? "low" : quality;
   const high = q === "high";
@@ -112,7 +114,7 @@ export default function VMarkScene({ quality, progressRef, interactive = true, p
       {/* Drop to the light path if the frame rate can't hold. */}
       <PerformanceMonitor onDecline={() => setDegraded(true)} flipflops={2} />
 
-      <VMark quality={q} interactive={interactive} progressRef={progressRef} offsetY={offsetY} onReady={onReady} />
+      <VMark quality={q} interactive={interactive} progressRef={progressRef} offsetY={offsetY} onReady={onReady} glowRef={glowRef} />
 
       {/* Steel floor grid: engineered, not glowy. */}
       <Grid
