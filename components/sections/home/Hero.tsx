@@ -97,7 +97,11 @@ export function Hero({ children }: { children: ReactNode }) {
             />
           </div>
           {/* Interactive background over the mark: circuit board by default, others via ?hero= */}
-          <HeroBackdrop progressRef={progressRef} className="absolute inset-0 h-full w-full" />
+          {/* Masked clear around the mark so the background never tints the logo. */}
+          <HeroBackdrop
+            progressRef={progressRef}
+            className="absolute inset-0 h-full w-full [mask-image:radial-gradient(ellipse_44%_19%_at_50%_54%,transparent_62%,black_112%)] md:[mask-image:radial-gradient(ellipse_27%_40%_at_50%_54%,transparent_62%,black_112%)]"
+          />
         </div>
       </div>
 

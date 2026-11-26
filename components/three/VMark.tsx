@@ -206,7 +206,9 @@ export function VMark({ quality, interactive = true, progressRef, offsetY = 0, o
   // Sample the logo once per quality level (async: the artwork is an image).
   useEffect(() => {
     let alive = true;
-    sampleDots(quality === "high" ? 28000 : 11000)
+    // Low tier (phones, modest laptops) still needs enough dots for the strokes to read solid:
+    // too few and the orange/white bands look like random mixed specks.
+    sampleDots(quality === "high" ? 28000 : 22000)
       .then((b) => alive && setBuffers(b))
       .catch((err) => console.error("[VMark] could not sample the logo artwork", err));
     return () => {
@@ -225,7 +227,7 @@ export function VMark({ quality, interactive = true, progressRef, offsetY = 0, o
       vertexShader,
       fragmentShader,
       uniforms: {
-        uSize: { value: quality === "high" ? 1.9 : 2.1 },
+        uSize: { value: quality === "high" ? 1.9 : 2.35 },
         uPixelRatio: { value: Math.min(gl.getPixelRatio(), 2) },
         uTime: { value: 0 },
         uFade: { value: 1 },
