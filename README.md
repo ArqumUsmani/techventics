@@ -44,7 +44,7 @@ All copy and data live in typed files under [`content/`](content/):
 | `projects.ts` | Case studies (currently **placeholders**: set `placeholder: false` for real ones). Each gets a page at `/work/<id>` with overview, challenge, steps, outcome and results; add images to `gallery` to make its slider slide |
 | `stats.ts` | The numbers on Home (currently **placeholder values**) |
 | `process.ts` | Discover / Design / Build / Launch steps |
-| `about.ts` | About page: story, values, team (placeholder slots) |
+| `about.ts` | About page: story, vision, values, offices |
 | `offices.ts` | Offices: city, time zone (for the live clocks), address, map coordinates |
 | `faqs.ts` | Services page FAQ (placeholder answers) |
 | `contact.ts` | Contact page copy, form options (service list, budget ranges) |
@@ -53,8 +53,6 @@ Images:
 
 - **Project covers / hover videos:** put files in `public/images/work/` and set `image`
   (e.g. `/images/work/freight.jpg`) and `previewSrc` (a short muted `.mp4`) in `projects.ts`.
-- **Team portraits:** put files in `public/images/team/` and set `photo` in `about.ts`.
-  They are shown in monochrome and turn to colour on hover.
 - **Logo:** the artwork lives in `public/brand/` as six SVGs:
   - `techventics-mark`, `techventics-wordmark` and `techventics-logo` (mark + wordmark);
   - each in an original-colour version and an `-on-dark` version (black drawn in bone for
@@ -221,7 +219,6 @@ scripts/                capture-fallback.mjs
 
 - The original vector logo (SVG/AI/PDF), to replace the traced version in `public/brand/`
 - USA and UK office addresses (`content/offices.ts`)
-- Team names, roles and portraits (`content/about.ts`)
 - Real case studies with images or videos (`content/projects.ts`)
 - Real numbers (`content/stats.ts`) and FAQ answers (`content/faqs.ts`)
 - Social profile URLs (`content/site.ts`)

@@ -4,13 +4,12 @@ import { PageHero } from "@/components/layout/PageHero";
 import { ClosingCta } from "@/components/sections/home/ClosingCta";
 import { Manifesto } from "@/components/sections/home/Manifesto";
 import { Offices } from "@/components/sections/about/Offices";
-import { TeamGrid } from "@/components/sections/about/TeamGrid";
 import { Values } from "@/components/sections/about/Values";
 import { about } from "@/content/about";
 
 export const metadata: Metadata = {
   title: "About",
-  description: "Who Techventics is, what we believe and where we work: a design and development studio in Karachi, Scotland and Texas.",
+  description: "Who Techventics is, what we believe and where we work: a design, development and IT hardware office in Karachi, Scotland and Texas.",
   alternates: { canonical: "/about" },
 };
 
@@ -29,10 +28,9 @@ export default function AboutPage() {
       <CircuitDivider />
       <Manifesto id="vision" index="02" eyebrow={about.vision.eyebrow} text={about.vision.text} />
       <Values />
-      <TeamGrid />
       <Offices />
       <CircuitDivider flip />
-      <ClosingCta index="06" />
+      <ClosingCta index="05" />
     </>
   );
 }
