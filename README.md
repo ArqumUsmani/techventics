@@ -179,6 +179,18 @@ public/.htaccess        Apache rules for the live site
 scripts/                capture-fallback.mjs
 ```
 
+### Hero background, splash and tube flicker
+
+- **Hero background:** four interactive options in `components/motion/heroBackdrops.ts`, all reacting to
+  hover and click: `circuit` (default), `signal`, `network` and `sparks`. Preview any of them by adding
+  `?hero=<name>` to the home page address, e.g. `/?hero=network`. To change the default, edit
+  `DEFAULT_HERO_BACKDROP` in `components/motion/HeroBackdrop.tsx`.
+- **Splash screen:** `components/layout/Splash.tsx`. Plays once per browser session (a new tab or window
+  shows it again); later page loads skip it before first paint. To see it again, open the site in a new tab.
+- **Tube flicker:** the hero logo strikes on like a fluorescent tube after the splash, and blinks when
+  hovered (white and ember strokes flicker separately). Timings live in `lib/tube.ts`.
+- All of it is skipped or reduced to a plain fade for visitors who prefer reduced motion.
+
 ### Performance and accessibility
 
 - The 3D scenes load lazily and only on capable devices. Each device gets a tier:

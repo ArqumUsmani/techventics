@@ -3,6 +3,7 @@ import type { ReactNode } from "react";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
 import { SkipLink } from "@/components/layout/SkipLink";
+import { Splash } from "@/components/layout/Splash";
 import { Cursor } from "@/components/motion/Cursor";
 import { PageTransition } from "@/components/motion/PageTransition";
 import { SmoothScroll } from "@/components/providers/SmoothScroll";
@@ -56,9 +57,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <head>
         {/* Marks JS as available before first paint, so reveal start states never flash. */}
         <script dangerouslySetInnerHTML={{ __html: "document.documentElement.classList.add('js')" }} />
+        {/* The splash plays once per session: later loads skip it before first paint. */}
+        <script
+          dangerouslySetInnerHTML={{
+            __html: "try{if(sessionStorage.getItem('tv-splash'))document.documentElement.dataset.splash='done'}catch(e){}",
+          }}
+        />
         <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationLd).replace(/</g, "\\u003c") }} />
       </head>
       <body>
+        <Splash />
         <SkipLink />
         <SmoothScroll>
           <Header />

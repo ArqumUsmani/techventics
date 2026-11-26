@@ -1,11 +1,12 @@
 "use client";
 
-import { useRef, type ReactNode } from "react";
-import { HeroSparks } from "@/components/motion/HeroSparks";
+import { useEffect, useRef, type ReactNode } from "react";
+import { HeroBackdrop } from "@/components/motion/HeroBackdrop";
 import { useGpuTier } from "@/components/three/useGpuTier";
 import { HERO_FOCUS_Y, VMarkStage } from "@/components/three/VMarkStage";
 import { gsap, ScrollTrigger, useGSAP } from "@/lib/gsap";
 import { useReducedMotion } from "@/lib/motion";
+import { SPLASH_DONE, flickerElement, splashFinished } from "@/lib/tube";
 
 const WORD = [
   { text: "TECH", tone: "text-bone" },
@@ -27,6 +28,25 @@ export function Hero({ children }: { children: ReactNode }) {
   const tier = useGpuTier();
   const reduced = useReducedMotion();
   const live = tier === "high" || tier === "low";
+  const tube = useRef<HTMLDivElement>(null);
+
+  // The mark switches on like a fluorescent tube: after the splash lifts, or straight
+  // away when the splash was skipped this session.
+  useEffect(() => {
+    const el = tube.current;
+    if (!el) return;
+    if (reduced) {
+      el.style.opacity = "1";
+      return;
+    }
+    const strike = () => flickerElement(el, undefined, 0.12);
+    if (splashFinished()) {
+      strike();
+      return;
+    }
+    window.addEventListener(SPLASH_DONE, strike, { once: true });
+    return () => window.removeEventListener(SPLASH_DONE, strike);
+  }, [reduced]);
 
   // Wordmark letters slide up from a mask.
   useGSAP(
@@ -67,15 +87,17 @@ export function Hero({ children }: { children: ReactNode }) {
       {/* 3D layer. Live: sticky behind hero + next section. Static: just behind the hero. */}
       <div aria-hidden className="pointer-events-none absolute inset-0">
         <div className={live ? "sticky top-0 h-[100lvh]" : "relative h-[100svh]"}>
-          <VMarkStage
-            className="h-full w-full"
-            tier={tier ?? "static"}
-            focusY={HERO_FOCUS_Y}
-            progressRef={progressRef}
-            priority
-          />
-          {/* Electrical sparks, embers and ember lighting over the mark */}
-          <HeroSparks progressRef={progressRef} className="absolute inset-0 h-full w-full" />
+          <div ref={tube} data-tube className="absolute inset-0 bg-ink">
+            <VMarkStage
+              className="h-full w-full"
+              tier={tier ?? "static"}
+              focusY={HERO_FOCUS_Y}
+              progressRef={progressRef}
+              priority
+            />
+          </div>
+          {/* Interactive background over the mark: circuit board by default, others via ?hero= */}
+          <HeroBackdrop progressRef={progressRef} className="absolute inset-0 h-full w-full" />
         </div>
       </div>
 

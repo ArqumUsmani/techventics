@@ -4,6 +4,7 @@ import { useFrame, useThree } from "@react-three/fiber";
 import { useEffect, useMemo, useRef, useState, type RefObject } from "react";
 import * as THREE from "three";
 import { LOGO_FILES } from "@/components/brand/logoFiles";
+import { blinkPattern, sampleTube, type TubePattern } from "@/lib/tube";
 
 /* ---------------------------------------------------------------
    The Techventics mark drawn entirely in dots, sampled from the logo artwork
@@ -117,6 +118,8 @@ const vertexShader = /* glsl */ `
   uniform float uPixelRatio;
   uniform float uTime;
   uniform float uFade;
+  uniform float uTubeA; // white strokes
+  uniform float uTubeB; // ember strokes
   uniform vec3 uTrail[SLOTS]; // xy = centre (mark space), z = radius
   attribute vec3 aColor;
   attribute float aSeed;
@@ -154,9 +157,11 @@ const vertexShader = /* glsl */ `
     if (aNode > 0.5) pulse = 1.0 + 0.7 * pow(0.5 + 0.5 * sin(uTime * 1.6 - aNode * 1.1), 3.0);
 
     gl_PointSize = clamp(uSize * uPixelRatio * pulse * (10.0 / -mv.z), 0.75, 6.0 * uPixelRatio);
-    vColor = aColor * (aNode > 0.5 ? pulse : 1.0);
+    // Two tubes flicker independently: ember dots (red well above blue) and white dots.
+    float tube = mix(uTubeA, uTubeB, step(0.5, aColor.r - aColor.b));
+    vColor = aColor * (aNode > 0.5 ? pulse : 1.0) * (0.45 + 0.55 * tube);
     // Fade dots that get very close to the camera during the fly-through.
-    vAlpha = uFade * smoothstep(0.25, 1.4, -mv.z) * (1.0 - scatter * 0.4);
+    vAlpha = uFade * smoothstep(0.25, 1.4, -mv.z) * (1.0 - scatter * 0.4) * (0.1 + 0.9 * min(tube, 1.0));
   }
 `;
 
@@ -224,6 +229,8 @@ export function VMark({ quality, interactive = true, progressRef, offsetY = 0, o
         uPixelRatio: { value: Math.min(gl.getPixelRatio(), 2) },
         uTime: { value: 0 },
         uFade: { value: 1 },
+        uTubeA: { value: 1 },
+        uTubeB: { value: 1 },
         uTrail: { value: Array.from({ length: TRAIL_SLOTS }, () => new THREE.Vector3(0, 0, 0)) },
       },
       transparent: true,
@@ -257,6 +264,9 @@ export function VMark({ quality, interactive = true, progressRef, offsetY = 0, o
     window.addEventListener("pointermove", onMove, { passive: true });
     return () => window.removeEventListener("pointermove", onMove);
   }, [interactive, gl]);
+
+  // Hover flicker: a blink when the cursor arrives on the mark, then the odd stutter while it stays.
+  const tubes = useRef({ over: false, nextAt: Infinity, a: { p: null as TubePattern | null, at: 0 }, b: { p: null as TubePattern | null, at: 0 } });
 
   const scratch = useMemo(
     () => ({
@@ -310,7 +320,26 @@ export function VMark({ quality, interactive = true, progressRef, offsetY = 0, o
           st.hasLast = true;
         }
         if (!over) st.hasLast = false;
+        const tb = tubes.current;
+        if (over && !tb.over) {
+          tb.a = { p: blinkPattern(), at: t };
+          tb.b = { p: blinkPattern(), at: t + 0.04 + Math.random() * 0.1 };
+          tb.nextAt = t + 1.5 + Math.random() * 2;
+        }
+        tb.over = over;
       }
+    }
+    {
+      const tb = tubes.current;
+      if (interactive && tb.over && t > tb.nextAt && idle > 0.99) {
+        // Usually one tube stutters, sometimes both.
+        const pick = Math.random();
+        if (pick < 0.4 || pick >= 0.75) tb.a = { p: blinkPattern(), at: t };
+        if (pick >= 0.4) tb.b = { p: blinkPattern(), at: t + (pick >= 0.75 ? 0.06 : 0) };
+        tb.nextAt = t + 1.8 + Math.random() * 2.5;
+      }
+      dots.material.uniforms.uTubeA.value = tb.a.p ? sampleTube(tb.a.p, t - tb.a.at) : 1;
+      dots.material.uniforms.uTubeB.value = tb.b.p ? sampleTube(tb.b.p, t - tb.b.at) : 1;
     }
 
     // Hole radius over its life: open fast, hold, then close smoothly.

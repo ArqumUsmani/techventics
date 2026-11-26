@@ -216,3 +216,13 @@ html.has-cursor :is(input, textarea, select, [contenteditable="true"]) {
     scroll-behavior: auto !important;
   }
 }
+
+/* Splash (components/layout/Splash.tsx) and the hero logo's tube flicker.
+   Lit elements start dark and are switched on by script; without JS none of this applies. */
+.js [data-splash-dim],
+.js [data-tube] {
+  opacity: 0;
+}
+html[data-splash="done"] [data-splash-screen] {
+  display: none;
+}

@@ -1,8 +1,8 @@
 "use client";
 
 import { Line } from "@react-three/drei";
-import { useFrame } from "@react-three/fiber";
-import { useMemo, useRef, type RefObject } from "react";
+import { useFrame, useThree } from "@react-three/fiber";
+import { useEffect, useMemo, useRef, type RefObject } from "react";
 import * as THREE from "three";
 import type { Office } from "@/content/types";
 import { LAND_H, LAND_MASK_B64, LAND_W } from "./landMask";
@@ -89,6 +89,56 @@ export function Globe({ offices, hubId, quality, centerLng = -16, interactive = 
   const pulseRefs = useRef<(THREE.Mesh | null)[]>([]);
   const travelRefs = useRef<(THREE.Mesh | null)[]>([]);
   const pointer = useRef({ x: 0, y: 0 });
+  // Drag to spin: yaw/pitch added on top of the sway, with momentum after release.
+  const drag = useRef({ active: false, id: -1, x: 0, y: 0, yaw: 0, pitch: 0, vYaw: 0, vPitch: 0, swayT: 0 });
+  const gl = useThree((s) => s.gl);
+
+  useEffect(() => {
+    if (!interactive) return;
+    const el = gl.domElement;
+    // Vertical swipes still scroll the page on touch screens; sideways swipes spin the globe.
+    el.style.touchAction = "pan-y";
+    el.style.cursor = "grab";
+    const d = drag.current;
+    const down = (e: PointerEvent) => {
+      d.active = true;
+      d.id = e.pointerId;
+      d.x = e.clientX;
+      d.y = e.clientY;
+      d.vYaw = 0;
+      d.vPitch = 0;
+      el.setPointerCapture(e.pointerId);
+      el.style.cursor = "grabbing";
+    };
+    const move = (e: PointerEvent) => {
+      if (!d.active || e.pointerId !== d.id) return;
+      const size = Math.max(el.clientWidth, 1);
+      const dx = ((e.clientX - d.x) / size) * Math.PI * 1.4;
+      const dy = ((e.clientY - d.y) / size) * Math.PI * 1.4;
+      d.x = e.clientX;
+      d.y = e.clientY;
+      d.yaw += dx;
+      d.pitch = THREE.MathUtils.clamp(d.pitch + dy, -1.1, 0.9);
+      // Remember the speed for the momentum after release.
+      d.vYaw = dx * 60;
+      d.vPitch = dy * 60;
+    };
+    const up = (e: PointerEvent) => {
+      if (e.pointerId !== d.id) return;
+      d.active = false;
+      el.style.cursor = "grab";
+    };
+    el.addEventListener("pointerdown", down);
+    el.addEventListener("pointermove", move);
+    el.addEventListener("pointerup", up);
+    el.addEventListener("pointercancel", up);
+    return () => {
+      el.removeEventListener("pointerdown", down);
+      el.removeEventListener("pointermove", move);
+      el.removeEventListener("pointerup", up);
+      el.removeEventListener("pointercancel", up);
+    };
+  }, [gl, interactive]);
 
   // Land dots on a Fibonacci sphere.
   const dots = useMemo(() => {
@@ -154,16 +204,30 @@ export function Globe({ offices, hubId, quality, centerLng = -16, interactive = 
     if (!g) return;
     const t = state.clock.elapsedTime;
 
+    const d = drag.current;
     if (interactive) {
-      pointer.current.x = THREE.MathUtils.damp(pointer.current.x, state.pointer.x, 3, delta);
-      pointer.current.y = THREE.MathUtils.damp(pointer.current.y, state.pointer.y, 3, delta);
+      // The hover lean rests while dragging, so the globe follows the hand exactly.
+      const leanX = d.active ? pointer.current.x : state.pointer.x;
+      const leanY = d.active ? pointer.current.y : state.pointer.y;
+      pointer.current.x = THREE.MathUtils.damp(pointer.current.x, leanX, 3, delta);
+      pointer.current.y = THREE.MathUtils.damp(pointer.current.y, leanY, 3, delta);
+      if (!d.active) {
+        // Momentum after release, easing out.
+        d.yaw += d.vYaw * delta;
+        d.pitch = THREE.MathUtils.clamp(d.pitch + d.vPitch * delta, -1.1, 0.9);
+        const decay = Math.exp(-2.5 * delta);
+        d.vYaw *= decay;
+        d.vPitch *= decay;
+        // The sway clock only runs when the globe is left alone.
+        d.swayT += delta;
+      }
     }
     // Gentle sway around the offices' longitudes rather than a full spin, so they stay in view.
     // Non-interactive (static capture) holds the centre, where all three offices face the viewer.
-    const sway = interactive ? Math.sin(t * 0.12) * 30 : 0;
-    g.rotation.y = -(centerLng + sway) * DEG + pointer.current.x * 0.25;
+    const sway = interactive ? Math.sin(d.swayT * 0.12) * 30 : 0;
+    g.rotation.y = -(centerLng + sway) * DEG + pointer.current.x * 0.25 + d.yaw;
     // ~35° tilt puts the view centre near 35°N; the wider sway brings Texas and Karachi into view in turn.
-    g.rotation.x = 0.6 + pointer.current.y * -0.12;
+    g.rotation.x = 0.6 + pointer.current.y * -0.12 + d.pitch;
 
     // Pin pulse rings
     pulseRefs.current.forEach((ring, i) => {
