@@ -2,7 +2,6 @@
 
 import dynamic from "next/dynamic";
 import { useEffect, useRef, useState, type RefObject } from "react";
-import { LOGO_FILES } from "@/components/brand/logoFiles";
 import { useGpuTier, type Tier } from "./useGpuTier";
 
 // The three.js bundle is only downloaded when a live scene will actually render.
@@ -51,7 +50,6 @@ export function VMarkStage({
   const [mounted, setMounted] = useState(false);
   const [ready, setReady] = useState(false);
   const [inView, setInView] = useState(true);
-  const glow = useRef<HTMLDivElement>(null);
 
   // Mount the canvas when the main thread is idle, so it never competes with first paint.
   // Low tier (phones, modest laptops): wait for the first interaction or 4s, so the
@@ -135,16 +133,7 @@ export function VMarkStage({
             focusY={focusY}
             paused={!inView}
             onReady={() => setReady(true)}
-            glowRef={glow}
           />
-          {/* Tube-light glow: the logo artwork blurred and screen-blended over the dots, like the splash.
-              Placed and dimmed by the mark each frame (see VMark). */}
-          <div ref={glow} aria-hidden className="pointer-events-none absolute left-0 top-0 opacity-0 mix-blend-screen will-change-transform">
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={LOGO_FILES.mark.srcOnDark} alt="" className="absolute inset-0 h-full w-full opacity-45 blur-[5px]" />
-            {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={LOGO_FILES.mark.srcOnDark} alt="" className="absolute inset-[-6%] h-[112%] w-[112%] opacity-50 blur-[28px]" />
-          </div>
         </div>
       )}
     </div>
