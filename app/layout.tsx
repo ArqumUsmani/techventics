@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { Footer } from "@/components/layout/Footer";
 import { Header } from "@/components/layout/Header";
+import { SiteBackdrop } from "@/components/layout/SiteBackdrop";
 import { SkipLink } from "@/components/layout/SkipLink";
 import { Splash } from "@/components/layout/Splash";
 import { Cursor } from "@/components/motion/Cursor";
@@ -67,6 +68,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       </head>
       <body>
         <Splash />
+        <SiteBackdrop />
         <SkipLink />
         <SmoothScroll>
           <Header />

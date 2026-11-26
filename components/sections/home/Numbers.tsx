@@ -6,7 +6,7 @@ import { stats } from "@/content/stats";
 /** Key numbers, counting up in JetBrains Mono. Values live in content/stats.ts. */
 export function Numbers() {
   return (
-    <section id="numbers" aria-labelledby="numbers-label" className="relative bg-ink py-20 md:py-28">
+    <section id="numbers" aria-labelledby="numbers-label" className="relative py-20 md:py-28">
       <div className="container-x">
         <Eyebrow index="05">
           <span id="numbers-label">{home.numbers.eyebrow}</span>

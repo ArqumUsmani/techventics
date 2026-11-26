@@ -48,7 +48,7 @@ export function ServicesTrack() {
   );
 
   return (
-    <section ref={root} id="services" aria-labelledby="services-title" className="relative overflow-x-clip bg-ink pt-24 md:pt-32">
+    <section ref={root} id="services" aria-labelledby="services-title" className="relative overflow-x-clip pt-24 md:pt-32">
       <div className="container-x">
         <SectionHeader id="services-title" index="03" eyebrow={home.services.eyebrow} big={home.services.big} title={home.services.title} />
       </div>

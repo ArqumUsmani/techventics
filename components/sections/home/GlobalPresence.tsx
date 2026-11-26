@@ -6,7 +6,7 @@ import { offices } from "@/content/offices";
 /** Offices list + dotted 3D globe with office pins and arcs from the HQ. */
 export function GlobalPresence() {
   return (
-    <section id="presence" aria-labelledby="presence-title" className="relative overflow-x-clip bg-ink py-24 md:py-32">
+    <section id="presence" aria-labelledby="presence-title" className="relative overflow-x-clip py-24 md:py-32">
       <div className="container-x grid gap-16 lg:grid-cols-12 lg:gap-8">
         <div className="lg:col-span-6">
           <SectionHeader id="presence-title" index="07" eyebrow={home.presence.eyebrow} big={home.presence.big} title={home.presence.title} />

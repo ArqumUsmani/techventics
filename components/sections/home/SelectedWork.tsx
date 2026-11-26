@@ -13,7 +13,7 @@ const LAYOUT = [
 
 export function SelectedWork() {
   return (
-    <section id="work" aria-labelledby="work-title" className="relative overflow-x-clip bg-ink py-24 md:py-32">
+    <section id="work" aria-labelledby="work-title" className="relative overflow-x-clip py-24 md:py-32">
       <div className="container-x">
         <SectionHeader id="work-title" index="04" eyebrow={home.work.eyebrow} big={home.work.big} title={home.work.title} />
 

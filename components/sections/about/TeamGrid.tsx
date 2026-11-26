@@ -9,7 +9,7 @@ import { about } from "@/content/about";
 export function TeamGrid() {
   const { eyebrow, big, title, members } = about.team;
   return (
-    <section aria-labelledby="team-title" className="relative overflow-x-clip bg-ink py-24 md:py-32">
+    <section aria-labelledby="team-title" className="relative overflow-x-clip py-24 md:py-32">
       <div className="container-x">
         <SectionHeader id="team-title" index="04" eyebrow={eyebrow} big={big} title={title} />
 

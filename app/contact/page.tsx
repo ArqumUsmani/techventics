@@ -17,7 +17,7 @@ export default function ContactPage() {
         <p className="measure text-lead text-ash">{contact.hero.body}</p>
       </PageHero>
 
-      <section aria-label="Project enquiry" className="bg-ink pb-24 md:pb-32">
+      <section aria-label="Project enquiry" className="pb-24 md:pb-32">
         <div className="container-x grid gap-16 lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-7">
             <ContactForm />

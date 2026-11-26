@@ -11,7 +11,7 @@ type PageHeroProps = {
 /** Top of the inner pages: eyebrow, one big line, optional body. `data-hero` drives the sticky header. */
 export function PageHero({ eyebrow, title, children }: PageHeroProps) {
   return (
-    <section data-hero className="relative bg-ink pb-16 pt-[calc(var(--spacing-header)+5rem)] md:pb-24 md:pt-[calc(var(--spacing-header)+8rem)]">
+    <section data-hero className="relative pb-16 pt-[calc(var(--spacing-header)+5rem)] md:pb-24 md:pt-[calc(var(--spacing-header)+8rem)]">
       <div className="container-x">
         <Eyebrow>{eyebrow}</Eyebrow>
         <SplitReveal as="h1" className="mt-8 max-w-[16ch] text-h1 text-bone" start="top 95%">

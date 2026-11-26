@@ -39,7 +39,7 @@ export default function ServicesPage() {
 
       <CircuitDivider />
 
-      <section aria-labelledby="faq-title" className="relative overflow-x-clip bg-ink py-24 md:py-32">
+      <section aria-labelledby="faq-title" className="relative overflow-x-clip py-24 md:py-32">
         <div className="container-x grid gap-12 lg:grid-cols-12 lg:gap-8">
           <div className="lg:col-span-4">
             <SectionHeader id="faq-title" index="02" eyebrow="Questions" big="FAQ" title="Before you ask." />

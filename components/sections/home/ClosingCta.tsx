@@ -8,7 +8,7 @@ import { site } from "@/content/site";
 export function ClosingCta({ index = "08" }: { index?: string }) {
   const { eyebrow, headline, body, cta } = home.closing;
   return (
-    <section id="start" aria-labelledby="start-title" className="relative overflow-hidden bg-ink py-28 md:py-40">
+    <section id="start" aria-labelledby="start-title" className="relative overflow-hidden py-28 md:py-40">
       <div className="container-x">
         <Eyebrow index={index}>{eyebrow}</Eyebrow>
         <SplitReveal

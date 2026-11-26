@@ -48,7 +48,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
       </PageHero>
 
       {/* Meta row */}
-      <section aria-label="Project details" className="bg-ink">
+      <section aria-label="Project details" >
         <div className="container-x">
           <dl className="grid grid-cols-2 gap-8 border-y border-steel py-8 md:grid-cols-4">
             {meta.map((m) => (
@@ -76,7 +76,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
       </section>
 
       {/* Images: one shows on its own, more become a slider */}
-      <section aria-label="Project images" className="bg-ink pt-12 md:pt-16">
+      <section aria-label="Project images" className="pt-12 md:pt-16">
         <div className="container-x">
           <ImageSlider
             images={project.gallery}
@@ -88,7 +88,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
       </section>
 
       {/* Story */}
-      <section aria-label="The project" className="bg-ink py-24 md:py-32">
+      <section aria-label="The project" className="py-24 md:py-32">
         <div className="container-x space-y-20 md:space-y-28">
           <StoryBlock number="01" heading="Overview">
             <p className="text-lead text-bone">{project.overview}</p>
@@ -132,7 +132,7 @@ export default async function ProjectPage({ params }: { params: Promise<Params> 
 
       {/* Next project */}
       {next.id !== project.id && (
-        <section aria-label="Next project" className="bg-ink py-24 md:py-32">
+        <section aria-label="Next project" className="py-24 md:py-32">
           <div className="container-x">
             <Link href={`/work/${next.id}`} className="group block" data-cursor="view">
               <p className="label text-ash">Next project</p>

@@ -110,7 +110,7 @@ export function Process() {
   );
 
   return (
-    <section ref={root} id="process" aria-labelledby="process-title" className="relative overflow-x-clip bg-ink py-24 md:py-32">
+    <section ref={root} id="process" aria-labelledby="process-title" className="relative overflow-x-clip py-24 md:py-32">
       <div className="container-x">
         <SectionHeader id="process-title" index="06" eyebrow={home.process.eyebrow} big={home.process.big} title={home.process.title} />
 

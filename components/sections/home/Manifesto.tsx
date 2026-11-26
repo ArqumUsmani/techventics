@@ -44,7 +44,7 @@ export function Manifesto({ eyebrow = home.manifesto.eyebrow, text = home.manife
   );
 
   return (
-    <section ref={root} id={id} aria-labelledby={`${id}-label`} className="relative bg-ink py-32 md:py-48">
+    <section ref={root} id={id} aria-labelledby={`${id}-label`} className="relative py-32 md:py-48">
       <div className="container-x">
         <Eyebrow index={index} as="h2" id={`${id}-label`}>
           {eyebrow}

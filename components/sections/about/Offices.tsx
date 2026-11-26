@@ -10,7 +10,7 @@ const SPAN = ["lg:col-span-6", "lg:col-span-3", "lg:col-span-3"];
 export function Offices() {
   const { eyebrow, big, title } = about.offices;
   return (
-    <section aria-labelledby="offices-title" className="relative overflow-x-clip bg-ink py-24 md:py-32">
+    <section aria-labelledby="offices-title" className="relative overflow-x-clip py-24 md:py-32">
       <div className="container-x">
         <SectionHeader id="offices-title" index="05" eyebrow={eyebrow} big={big} title={title} />
 

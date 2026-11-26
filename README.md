@@ -189,6 +189,9 @@ scripts/                capture-fallback.mjs
   shows it again); later page loads skip it before first paint. To see it again, open the site in a new tab.
 - **Tube flicker:** the hero logo strikes on like a fluorescent tube after the splash, and blinks when
   hovered (white and ember strokes flicker separately). Timings live in `lib/tube.ts`.
+- **Site background:** `components/layout/SiteBackdrop.tsx` + `.site-backdrop` in `app/globals.css`: a faint dot
+  grid that turns ember around the cursor, two slow-drifting ember glows and fine grain, fixed behind every page.
+  Sections are transparent so it shows through; cards keep their solid fill. Tune strength in the CSS.
 - All of it is skipped or reduced to a plain fade for visitors who prefer reduced motion.
 
 ### Performance and accessibility

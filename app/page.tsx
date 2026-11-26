@@ -15,7 +15,7 @@ export default function HomePage() {
       <Hero>
         <Intro />
       </Hero>
-      <div className="relative bg-ink">
+      <div className="relative">
         <Manifesto />
         <CircuitDivider />
         <ServicesTrack />

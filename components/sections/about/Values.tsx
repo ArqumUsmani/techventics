@@ -8,7 +8,7 @@ const INDENT = ["", "md:ml-[16.66%]", "md:ml-[33.33%]"];
 /** Three large value statements, each revealing line by line on scroll. */
 export function Values() {
   return (
-    <section aria-labelledby="values-label" className="relative bg-ink py-24 md:py-32">
+    <section aria-labelledby="values-label" className="relative py-24 md:py-32">
       <div className="container-x">
         <Eyebrow index="03" as="h2" id="values-label">
           {about.values.eyebrow}
